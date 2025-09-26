@@ -10,7 +10,7 @@ function App() {
         </a>
       </div>
       <h2 className="text-3xl font-bold text-wingman-purple mb-6">The best map for Portland Wing Week.</h2>
-      <ul className="text-2xl list-disc mt-4 *:mb-3 mb-12">
+      <ul className="text-xl md:text-2xl list-disc mt-4 *:mb-3 mb-12 px-2">
         <li>Find the best wings in Portland</li>
         <li>Favorite and rate wings with your friends</li>
         <li>Filter by neighborhood, what's open now, and more</li>
