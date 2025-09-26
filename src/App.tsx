@@ -9,7 +9,14 @@ function App() {
           <img src={wingmanLogo} className="logo wingman mx-auto" alt="Wingman" />
         </a>
       </div>
-      <h2 className="text-3xl font-bold text-wingman-purple mb-4">Coming soon...</h2>
+      <h2 className="text-3xl font-bold text-wingman-purple mb-6">The best map for Portland Wing Week.</h2>
+      <ul className="text-2xl list-disc mt-4 *:mb-3 mb-12">
+        <li>Find the best wings in Portland</li>
+        <li>Favorite and rate wings with your friends</li>
+        <li>Filter by neighborhood, what's open now, and more</li>
+        <li>Get directions to your next wing adventure</li>
+      </ul>
+      <h2 className="text-3xl font-bold text-wingman-purple">Coming soon...</h2>
     </div>
   )
 }
