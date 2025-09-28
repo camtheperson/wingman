@@ -164,18 +164,22 @@ export default function Map() {
   ) || [];
   
   // Helper functions for ratings and favorites (temporarily disabled)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getUserRating = (_itemId: string) => {
     return 0; // Always return 0 rating when auth is disabled
   };
   
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isFavorited = (_itemId: string) => {
     return false; // Always return false when auth is disabled
   };
   
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRatingClick = async (_itemId: string, _rating: number) => {
     console.log('Rating functionality temporarily disabled');
   };
   
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleFavoriteClick = async (_itemId: string) => {
     console.log('Favorites functionality temporarily disabled');
   };
