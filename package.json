@@ -21,6 +21,7 @@
     "migrate": "node scripts/migrate-data.js"
   },
   "dependencies": {
+    "@auth/core": "^0.37.0",
     "@clerk/clerk-react": "^5.49.0",
     "@convex-dev/auth": "^0.0.90",
     "@tanstack/react-query": "^5.90.2",
