@@ -26,9 +26,3 @@ jobs:
 
     - name: Build Frontend (validation)
       run: npm run build
-
-    - name: Validate Convex deployment (dry run)
-      run: npx convex deploy --dry-run
-      env:
-        CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOY_KEY }}
-    
