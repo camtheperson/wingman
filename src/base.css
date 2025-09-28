@@ -1,3 +1,4 @@
+@import 'leaflet/dist/leaflet.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,10 +16,19 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* Immediate map markers - slightly faded to show they're loading */
+.immediate-marker {
+  opacity: 0.8;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.immediate-marker:hover {
+  opacity: 1;
 }
 
 h1 {
@@ -33,12 +43,11 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #3d2852;
 }
 button:focus,
 button:focus-visible {
@@ -51,9 +60,15 @@ button:focus-visible {
     background-color: #ffffff;
   }
   a:hover {
-    color: #747bff;
+    color: #3d2852;
   }
   button {
     background-color: #f9f9f9;
   }
+}
+
+.brand-font {
+  font-family: "brandon-grotesque", sans-serif;
+  font-weight: 700;
+  font-style: normal;
 }

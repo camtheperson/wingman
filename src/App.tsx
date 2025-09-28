@@ -1,24 +1,25 @@
-import wingmanLogo from '/wingman.png'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Map, List, ItemDetail, Donate } from './pages';
+import { Navigation } from './components';
 
 function App() {
   return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="mb-8">
-        <a href="https://camtheperson.com/wingman/" target="_blank">
-          <img src={wingmanLogo} className="logo wingman mx-auto" alt="Wingman" />
-        </a>
-      </div>
-      <h2 className="text-3xl font-bold text-wingman-purple mb-6">The best map for Portland Wing Week.</h2>
-      <ul className="text-xl md:text-2xl list-disc mt-4 *:mb-3 mb-12 px-2">
-        <li>Find the best wings in Portland</li>
-        <li>Favorite and rate wings with your friends</li>
-        <li>Filter by neighborhood, what's open now, and more</li>
-        <li>Get directions to your next wing adventure</li>
-      </ul>
-      <h2 className="text-3xl font-bold text-wingman-purple">Coming soon...</h2>
-    </div>
-  )
+    <Router basename="/wingman">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          <Navigation />
+          <main className="flex-1 min-h-0">
+            <Routes>
+              <Route path="/" element={<Map />} />
+              <Route path="/list" element={<List />} />
+              <Route path="/item/:id" element={<ItemDetail />} />
+              <Route path="/donate" element={<Donate />} />
+              {/* Catch-all route for unknown paths */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+  );
 }
 
-export default App
+export default App;
