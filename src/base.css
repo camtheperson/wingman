@@ -21,6 +21,16 @@ body {
   min-height: 100vh;
 }
 
+/* Immediate map markers - slightly faded to show they're loading */
+.immediate-marker {
+  opacity: 0.8;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.immediate-marker:hover {
+  opacity: 1;
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;

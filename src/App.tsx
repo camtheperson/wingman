@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Map, List, ItemDetail, Donate } from './pages';
 import { Navigation } from './components';
-import './App.css';
 
 function App() {
   return (

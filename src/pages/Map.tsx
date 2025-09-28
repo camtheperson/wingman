@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useQuery, useMutation } from 'convex/react';
@@ -8,9 +8,10 @@ import type { Doc } from '../../convex/_generated/dataModel';
 import { Filter, Search, Star, Heart, X, MapPin } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
+import itemsData from '../../data/items.json';
 import 'leaflet/dist/leaflet.css';
 
-// Type definitions based on Convex schema
+// Type definitions based on Convex schema and JSON data
 type LocationItem = Doc<'locationItems'> & {
   averageRating?: number;
 };
@@ -20,6 +21,15 @@ type LocationWithItems = Doc<'locations'> & {
   hours?: Doc<'locationHours'>[];
   averageRating?: number;
   isOpenNow?: boolean;
+};
+
+// JSON data type for immediate pins
+type JsonLocationPin = {
+  restaurantName: string;
+  neighborhood: string;
+  latitude: number;
+  longitude: number;
+  address: string;
 };
 
 // Custom marker icons
@@ -39,6 +49,17 @@ const favoriteMarkerIcon = new L.Icon({
   iconAnchor: [20, 40],
   popupAnchor: [0, -40],
   shadowSize: [40, 40]
+});
+
+// Immediate (loading) marker - slightly smaller to indicate it's temporary
+const immediateMarkerIcon = new L.Icon({
+  iconUrl: '/wingman/marker.png',
+  iconRetinaUrl: '/wingman/marker.png',
+  iconSize: [35, 35], // Slightly smaller
+  iconAnchor: [17.5, 35],
+  popupAnchor: [0, -35],
+  shadowSize: [35, 35],
+  className: 'immediate-marker' // Add CSS class for potential styling
 });
 
 // Map controller component for handling map interactions
@@ -70,6 +91,49 @@ export default function Map() {
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
   const [hoveredRating, setHoveredRating] = useState<string | null>(null);
 
+  // Process JSON data to create immediate pins with filtering
+  const immediatePins: JsonLocationPin[] = useMemo(() => {
+    const seenLocations = new Set<string>();
+    const pins: JsonLocationPin[] = [];
+    
+    // Type the imported JSON data
+    interface JsonItem {
+      restaurantName: string;
+      neighborhood: string;
+      latitude: number;
+      longitude: number;
+      address: string;
+      glutenFree?: boolean;
+      allowMinors?: boolean;
+      allowTakeout?: boolean;
+      allowDelivery?: boolean;
+    }
+    
+    (itemsData as JsonItem[]).forEach((item) => {
+      if (item.latitude && item.longitude && item.restaurantName && !seenLocations.has(item.restaurantName)) {
+        // Apply basic filters from search criteria
+        const matchesSearch = !searchTerm || 
+          item.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.neighborhood.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesNeighborhood = !selectedNeighborhood || item.neighborhood === selectedNeighborhood;
+        
+        if (matchesSearch && matchesNeighborhood) {
+          seenLocations.add(item.restaurantName);
+          pins.push({
+            restaurantName: item.restaurantName,
+            neighborhood: item.neighborhood,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            address: item.address
+          });
+        }
+      }
+    });
+    
+    return pins;
+  }, [searchTerm, selectedNeighborhood]);
+
   const locations = useQuery(api.locations.getLocations, {
     searchTerm: searchTerm || undefined,
     neighborhood: selectedNeighborhood || undefined,
@@ -99,7 +163,7 @@ export default function Map() {
   
   // Helper function to get user's rating for an item
   const getUserRating = (itemId: string) => {
-    return userRatings?.find(r => r.itemId === itemId)?.rating || 0;
+    return userRatings?.find((r: { itemId: string; rating: number }) => r.itemId === itemId)?.rating || 0;
   };
   
   // Helper function to check if item is favorited
@@ -210,6 +274,59 @@ export default function Map() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
+          {/* 
+            Render immediate pins from JSON data for instant loading.
+            These show up immediately while detailed data loads from Convex.
+            They are slightly smaller and faded to indicate they're temporary.
+          */}
+          {immediatePins.map((pin, index) => {
+            // Check if this pin has detailed data loaded from Convex
+            // Use a more precise coordinate match to avoid duplicate pins
+            const detailedLocation = filteredLocations.find(loc => 
+              loc && 
+              Math.abs(loc.latitude! - pin.latitude) < 0.0001 && 
+              Math.abs(loc.longitude! - pin.longitude) < 0.0001 &&
+              loc.restaurantName === pin.restaurantName
+            );
+            
+            // Only render immediate pin if detailed version isn't available yet
+            if (!detailedLocation) {
+              return (
+                <Marker
+                  key={`immediate-${index}`}
+                  position={[pin.latitude, pin.longitude]}
+                  icon={immediateMarkerIcon}
+                  eventHandlers={{
+                    click: () => {
+                      // Create a temporary location object for display
+                      const tempLocation = {
+                        _id: `temp-${index}`,
+                        restaurantName: pin.restaurantName,
+                        neighborhood: pin.neighborhood,
+                        address: pin.address,
+                        latitude: pin.latitude,
+                        longitude: pin.longitude,
+                        items: [],
+                        hours: [],
+                        _creationTime: Date.now(),
+                        allowMinors: false,
+                        allowTakeout: false,
+                        allowDelivery: false,
+                        purchaseLimits: false,
+                        phone: null,
+                        website: null,
+                        updatedAt: Date.now()
+                      } as unknown as LocationWithItems;
+                      handleLocationClick(tempLocation);
+                    },
+                  }}
+                />
+              );
+            }
+            return null;
+          })}
+          
+          {/* Render detailed pins from Convex data (these will overlay the immediate pins) */}
           {filteredLocations.map((location) => location && (
             <Marker
               key={location._id}
@@ -244,6 +361,13 @@ export default function Map() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+              
+              {/* Show loading state for temporary locations */}
+              {selectedLocation._id.startsWith('temp-') && (
+                <div className="mt-4 text-center text-gray-500">
+                  <p>Loading detailed information...</p>
+                </div>
+              )}
               
               {selectedLocation.items && selectedLocation.items.length > 0 && (
                 <div className="space-y-4 mt-4">

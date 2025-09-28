@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, List, Map, DollarSign, User, LogOut } from 'lucide-react';
+import { List, Map, DollarSign, User } from 'lucide-react';
 
 export default function Navigation() {
   const location = useLocation();
