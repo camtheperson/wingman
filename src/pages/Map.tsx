@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useQuery, useMutation } from 'convex/react';
-import { useNavigate } from 'react-router-dom';
+import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { Filter, Search, Star, Heart, X, MapPin } from 'lucide-react';
@@ -79,7 +78,6 @@ function MapController({ selectedLocation }: { selectedLocation: LocationWithIte
 }
 
 export default function Map() {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
   const [glutenFree, setGlutenFree] = useState(false);
@@ -156,13 +154,6 @@ export default function Map() {
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
-  const currentUser = useQuery(api.users.getCurrentUser);
-  const userFavorites = useQuery(api.users.getUserFavorites);
-  const userRatings = useQuery(api.users.getUserRatings);
-  
-  // Mutations
-  const rateItem = useMutation(api.users.rateItem);
-  const toggleFavorite = useMutation(api.users.toggleFavorite);
 
   const handleLocationClick = (location: LocationWithItems) => {
     setSelectedLocation(location);
@@ -172,42 +163,21 @@ export default function Map() {
     location != null && location.latitude != null && location.longitude != null
   ) || [];
   
-  // Helper function to get user's rating for an item
-  const getUserRating = (itemId: string) => {
-    return userRatings?.find((r: { itemId: string; rating: number }) => r.itemId === itemId)?.rating || 0;
+  // Helper functions for ratings and favorites (temporarily disabled)
+  const getUserRating = (_itemId: string) => {
+    return 0; // Always return 0 rating when auth is disabled
   };
   
-  // Helper function to check if item is favorited
-  const isFavorited = (itemId: string) => {
-    return userFavorites?.includes(itemId as Doc<'locationItems'>['_id']) || false;
+  const isFavorited = (_itemId: string) => {
+    return false; // Always return false when auth is disabled
   };
   
-  // Handle rating click
-  const handleRatingClick = async (itemId: string, rating: number) => {
-    if (!currentUser) {
-      navigate('/sign-in');
-      return;
-    }
-    
-    try {
-      await rateItem({ itemId: itemId as Doc<'locationItems'>['_id'], rating });
-    } catch (error) {
-      console.error('Failed to rate item:', error);
-    }
+  const handleRatingClick = async (_itemId: string, _rating: number) => {
+    console.log('Rating functionality temporarily disabled');
   };
   
-  // Handle favorite toggle
-  const handleFavoriteClick = async (itemId: string) => {
-    if (!currentUser) {
-      navigate('/sign-in');
-      return;
-    }
-    
-    try {
-      await toggleFavorite({ itemId: itemId as Doc<'locationItems'>['_id'] });
-    } catch (error) {
-      console.error('Failed to toggle favorite:', error);
-    }
+  const handleFavoriteClick = async (_itemId: string) => {
+    console.log('Favorites functionality temporarily disabled');
   };
 
   return (

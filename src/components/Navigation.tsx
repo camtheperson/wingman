@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { List, Map, DollarSign, User, Filter } from 'lucide-react';
+import { List, Map, DollarSign, Filter } from 'lucide-react';
 
 export default function Navigation() {
   const location = useLocation();
@@ -69,31 +69,18 @@ export default function Navigation() {
               Donate
             </Link>
 
-            <Link
-              to="/sign-in"
-              className="flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-wingman-orange hover:bg-wingman-orange-light transition-colors"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Sign In
-            </Link>
+            {/* Sign In temporarily disabled */}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            {isActive('/') ? (
+            {isActive('/') && (
               <button
                 onClick={handleMobileFilterClick}
                 className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-wingman-purple hover:text-wingman-purple-light"
               >
                 <Filter className="w-5 h-5" />
               </button>
-            ) : (
-              <Link
-                to="/sign-in"
-                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-wingman-orange hover:text-wingman-orange-light"
-              >
-                <User className="w-4 h-4" />
-              </Link>
             )}
           </div>
         </div>

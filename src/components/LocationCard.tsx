@@ -1,8 +1,5 @@
 import React from 'react';
 import { Star, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 
 interface LocationCardProps {
   location: {
@@ -79,19 +76,13 @@ function isLocationOpenNow(hours?: Array<{ dayOfWeek: string; date: string; hour
 }
 
 export default function LocationCard({ location, onClick, isSelected }: LocationCardProps) {
-  const navigate = useNavigate();
-  const currentUser = useQuery(api.users.getCurrentUser);
   const isOpenNow = isLocationOpenNow(location.hours);
   const [hoveredRating, setHoveredRating] = React.useState<number | null>(null);
 
   const handleRatingClick = (rating: number, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    if (!currentUser) {
-      navigate('/sign-in');
-      return;
-    }
-    // TODO: Implement rating submission
-    console.log('Rating clicked:', rating, 'User:', currentUser);
+    // Rating functionality temporarily disabled
+    console.log('Rating clicked:', rating);
   };
 
   return (
