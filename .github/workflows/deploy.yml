@@ -36,11 +36,6 @@ jobs:
         CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
 
-    - name: Run Database Migration
-      run: npm run migrate
-      env:
-        VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
-
     - name: Build Frontend
       run: npm run build
       env:
