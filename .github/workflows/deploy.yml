@@ -34,11 +34,12 @@ jobs:
       run: npx convex deploy --yes
       env:
         CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-    
+        CONVEX_DEPLOYMENT: tame-bass-671
+
     - name: Build Frontend
       run: npm run build
       env:
-        VITE_CONVEX_URL: https://bold-puffin-534.convex.cloud
+        VITE_CONVEX_URL: https://tame-bass-671.convex.cloud
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
