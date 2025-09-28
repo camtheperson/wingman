@@ -88,22 +88,4 @@ export default defineSchema({
     .index("by_user_id", ["userId"])
     .index("by_item_id", ["itemId"])
     .index("by_user_and_item", ["userId", "itemId"]),
-
-  // Donations table - track donations made through the app
-  donations: defineTable({
-    userId: v.optional(v.id("users")),
-    amount: v.number(),
-    currency: v.string(),
-    paymentMethod: v.string(), // 'apple_pay', 'google_pay', 'card', etc.
-    stripePaymentIntentId: v.optional(v.string()),
-    status: v.union(v.literal("pending"), v.literal("succeeded"), v.literal("failed")),
-    donorName: v.optional(v.string()),
-    donorEmail: v.optional(v.string()),
-    isAnonymous: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user_id", ["userId"])
-    .index("by_status", ["status"])
-    .index("by_created_at", ["createdAt"]),
 });
