@@ -21,6 +21,7 @@
     "migrate": "node scripts/migrate-data.js"
   },
   "dependencies": {
+    "@convex-dev/auth": "^0.0.90",
     "@tanstack/react-query": "^5.90.2",
     "@types/leaflet": "^1.9.20",
     "axios": "^1.12.2",

@@ -3,33 +3,14 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import type { Doc } from '../../convex/_generated/dataModel';
 import { Filter, Search, Star, Heart, X, MapPin } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
+import type { LocationWithItems, LocationItem, JsonLocationPin } from '../types';
 import itemsData from '../../data/items.json';
 import 'leaflet/dist/leaflet.css';
 
-// Type definitions based on Convex schema and JSON data
-type LocationItem = Doc<'locationItems'> & {
-  averageRating?: number;
-};
 
-type LocationWithItems = Doc<'locations'> & {
-  items?: LocationItem[];
-  hours?: Doc<'locationHours'>[];
-  averageRating?: number;
-  isOpenNow?: boolean;
-};
-
-// JSON data type for immediate pins
-type JsonLocationPin = {
-  restaurantName: string;
-  neighborhood: string;
-  latitude: number;
-  longitude: number;
-  address: string;
-};
 
 // Custom marker icons
 const defaultMarkerIcon = new L.Icon({

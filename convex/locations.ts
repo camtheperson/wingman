@@ -82,14 +82,31 @@ export const getLocations = query({
           : items;
         
         // Check if open now (simplified - you can enhance this logic)
-        const isOpenNow = checkIfOpenNow(hours);
+        const isOpenNow = checkIfOpenNow(hours as Array<{
+          dayOfWeek: string;
+          date: string;
+          hours: string;
+          fullDate: string;
+        }>);
         
         if (args.isOpenNow && !isOpenNow) {
           return null;
         }
         
         return {
-          ...location,
+          _id: location._id,
+          restaurantName: location.restaurantName,
+          address: location.address,
+          neighborhood: location.neighborhood,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          geocodedAddress: location.geocodedAddress,
+          geocodingMethod: location.geocodingMethod,
+          allowMinors: location.allowMinors,
+          allowTakeout: location.allowTakeout,
+          allowDelivery: location.allowDelivery,
+          phone: location.phone,
+          website: location.website,
           items: filteredItems,
           hours,
           averageRating,
@@ -133,7 +150,13 @@ export const getLocationById = query({
           : 0;
         
         return {
-          ...item,
+          _id: item._id,
+          locationId: item.locationId,
+          itemName: item.itemName,
+          description: item.description,
+          type: item.type,
+          glutenFree: item.glutenFree,
+          image: item.image,
           averageRating,
           ratingCount: ratings.length,
           ratings,
@@ -142,7 +165,19 @@ export const getLocationById = query({
     );
     
     return {
-      ...location,
+      _id: location._id,
+      restaurantName: location.restaurantName,
+      address: location.address,
+      neighborhood: location.neighborhood,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      geocodedAddress: location.geocodedAddress,
+      geocodingMethod: location.geocodingMethod,
+      allowMinors: location.allowMinors,
+      allowTakeout: location.allowTakeout,
+      allowDelivery: location.allowDelivery,
+      phone: location.phone,
+      website: location.website,
       items: itemsWithRatings,
       hours,
     };
