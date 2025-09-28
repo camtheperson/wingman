@@ -3,18 +3,38 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.20.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "scrape": "node scripts/scraper.js",
+    "scrape-images": "node scripts/scrape-images.js",
+    "geocode": "node scripts/google-geocode.js",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "migrate": "node scripts/migrate-data.js"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.49.0",
+    "@convex-dev/auth": "^0.0.90",
+    "@tanstack/react-query": "^5.90.2",
+    "@types/leaflet": "^1.9.20",
+    "axios": "^1.12.2",
+    "cheerio": "^1.1.2",
     "convex": "^1.27.3",
+    "dotenv": "^17.2.2",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.544.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

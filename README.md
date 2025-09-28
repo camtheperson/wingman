@@ -1,6 +1,78 @@
-# Wingman - React + TypeScript + Vite + Convex
+# 🍗 Wingman - Portland Wing Week 2025 Map
 
-A modern web application built with React, TypeScript, Vite, and Convex, deployable to GitHub Pages.
+An interactive map and comprehensive guide for Portland Wing Week 2025, built with React, TypeScript, Convex, and Leaflet. Discover the best wing offerings across Portland, rate your favorites, and connect with the wing community.
+
+![Wingman Logo](public/wingman.png)
+
+## 🌟 Features
+
+### Interactive Map
+- **Browse Locations**: Interactive map showing all participating restaurants
+- **Search & Filter**: Find specific restaurants, wings, or neighborhoods
+- **Real-time Updates**: Live data from Convex backend
+- **Location Details**: Detailed popups with wing information
+
+### List View
+- **Comprehensive Directory**: Browse all locations in a clean list format
+- **Advanced Sorting**: Sort by name, rating, or neighborhood
+- **Rich Information**: Full restaurant details, hours, and contact info
+
+### User Features
+- **Authentication**: Sign up/sign in with email or password
+- **Favorites**: Save your favorite wing locations and items
+- **Ratings & Reviews**: Rate wings from 0-5 stars in half-star increments
+- **Personalized Experience**: Track your favorites across map and list views
+
+### Filtering Options
+- **Neighborhood**: Filter by Portland neighborhoods
+- **Open Now**: Show only currently open restaurants
+- **Dietary Options**: Filter for gluten-free options
+- **Service Type**: Takeout, delivery, family-friendly options
+- **Real-time Status**: Dynamic filtering based on current hours
+
+### Community Support
+- **Donation Portal**: Support the app with Apple Pay, Google Pay, or card
+- **Anonymous Donations**: Option for anonymous contributions
+- **Impact Transparency**: Clear breakdown of how donations are used
+
+## 🛠️ Technology Stack
+
+### Frontend
+- **React 19** with TypeScript
+- **Vite** for fast development and optimized builds
+- **Tailwind CSS** for styling
+- **React Router** for navigation
+- **React Leaflet** for interactive maps
+- **Lucide React** for icons
+
+### Backend & Database
+- **Convex** for real-time backend and database
+- **Convex Auth** for authentication
+- **Real-time Subscriptions** for live data updates
+
+### Maps & Geolocation
+- **Leaflet.js** with OpenStreetMap tiles
+- **React Leaflet** for React integration
+- **Custom Markers** and popups
+- **Geolocation API** for user location
+
+### Authentication
+- **Convex Auth** with email/password
+- **Secure Session Management**
+- **User Profile Management**
+
+## 📊 Database Schema
+
+### Core Tables
+- **locations**: Restaurant information and metadata
+- **locationItems**: Specific wing offerings at each location
+- **locationHours**: Operating hours during Wing Week
+- **users**: User accounts and profiles
+
+### Engagement Tables
+- **favorites**: User-favorited wing items
+- **itemRatings**: User ratings and reviews (0-5 stars)
+- **donations**: Community support tracking
 
 ## Features
 
