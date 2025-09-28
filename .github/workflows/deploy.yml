@@ -43,6 +43,8 @@ jobs:
 
     - name: Build Frontend
       run: npm run build
+      env:
+        VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
