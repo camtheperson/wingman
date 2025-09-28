@@ -39,12 +39,12 @@ export default function Filters({
   };
 
   return (
-    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+    <div className="mt-4 p-4 md:p-4 bg-gray-50 rounded-lg space-y-6 md:space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-medium text-gray-900">Filters</h3>
+        <h3 className="font-semibold md:font-medium text-lg md:text-base text-gray-900">Filters</h3>
         <button
           onClick={clearFilters}
-          className="text-sm text-wingman-purple hover:text-wingman-purple-light transition-colors"
+          className="text-base md:text-sm text-wingman-purple hover:text-wingman-purple-light transition-colors px-2 py-1"
         >
           Clear All
         </button>
@@ -52,13 +52,13 @@ export default function Filters({
 
       {/* Neighborhood Filter */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-base md:text-sm font-medium text-gray-700 mb-2 md:mb-1">
           Neighborhood
         </label>
         <select
           value={selectedNeighborhood}
           onChange={(e) => setSelectedNeighborhood(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          className="w-full px-4 py-3 md:px-3 md:py-2 text-base md:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
         >
           <option value="">All Neighborhoods</option>
           {neighborhoods.map((neighborhood) => (
@@ -70,55 +70,55 @@ export default function Filters({
       </div>
 
       {/* Dietary & Accessibility Options */}
-      <div className="space-y-2">
-        <label className="flex items-center">
+      <div className="space-y-4 md:space-y-2">
+        <label className="flex items-center py-1 cursor-pointer">
           <input
             type="checkbox"
             checked={glutenFree}
             onChange={(e) => setGlutenFree(e.target.checked)}
-            className="mr-2 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
           />
-          <span className="text-sm text-gray-700">Gluten Free Options</span>
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Gluten Free Options</span>
         </label>
 
-        <label className="flex items-center">
+        <label className="flex items-center py-1 cursor-pointer">
           <input
             type="checkbox"
             checked={allowMinors}
             onChange={(e) => setAllowMinors(e.target.checked)}
-            className="mr-2 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
           />
-          <span className="text-sm text-gray-700">Family Friendly</span>
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Family Friendly</span>
         </label>
 
-        <label className="flex items-center">
+        <label className="flex items-center py-1 cursor-pointer">
           <input
             type="checkbox"
             checked={allowTakeout}
             onChange={(e) => setAllowTakeout(e.target.checked)}
-            className="mr-2 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
           />
-          <span className="text-sm text-gray-700">Takeout Available</span>
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Takeout Available</span>
         </label>
 
-        <label className="flex items-center">
+        <label className="flex items-center py-1 cursor-pointer">
           <input
             type="checkbox"
             checked={allowDelivery}
             onChange={(e) => setAllowDelivery(e.target.checked)}
-            className="mr-2 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
           />
-          <span className="text-sm text-gray-700">Delivery Available</span>
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Delivery Available</span>
         </label>
 
-        <label className="flex items-center">
+        <label className="flex items-center py-1 cursor-pointer">
           <input
             type="checkbox"
             checked={isOpenNow}
             onChange={(e) => setIsOpenNow(e.target.checked)}
-            className="mr-2 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
           />
-          <span className="text-sm text-gray-700">Open Now</span>
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Open Now</span>
         </label>
       </div>
     </div>

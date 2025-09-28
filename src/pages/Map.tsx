@@ -88,8 +88,19 @@ export default function Map() {
   const [allowDelivery, setAllowDelivery] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
   const [hoveredRating, setHoveredRating] = useState<string | null>(null);
+
+  // Listen for mobile filter button clicks from Navigation
+  useEffect(() => {
+    const handleMobileFilterClick = () => {
+      setShowMobileFilters(true);
+    };
+    
+    window.addEventListener('openMobileFilters', handleMobileFilterClick);
+    return () => window.removeEventListener('openMobileFilters', handleMobileFilterClick);
+  }, []);
 
   // Process JSON data to create immediate pins with filtering
   const immediatePins: JsonLocationPin[] = useMemo(() => {
@@ -201,8 +212,8 @@ export default function Map() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
-      {/* Sidebar */}
-      <div className="w-1/3 bg-white border-r overflow-y-auto">
+      {/* Sidebar - Hidden on mobile */}
+      <div className="hidden md:block md:w-1/3 bg-white border-r overflow-y-auto">
         {/* Search and Filters */}
         <div className="p-4 border-b">
           <div className="relative mb-4">
@@ -261,7 +272,7 @@ export default function Map() {
       </div>
 
       {/* Map */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative w-full">
         <MapContainer
           center={[45.5152, -122.6784]} // Portland coordinates
           zoom={12}
@@ -341,24 +352,24 @@ export default function Map() {
 
         {/* Location Details Overlay */}
         {selectedLocation && (
-          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-80 overflow-y-auto">
-            <div className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
+          <div className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-[70vh] md:max-h-80 overflow-y-auto">
+            <div className="p-3 md:p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1 pr-2">
+                  <h3 className="text-xl md:text-lg font-semibold text-gray-900 leading-tight">
                     {selectedLocation.restaurantName}
                   </h3>
-                  <div className="flex items-center text-sm text-gray-600 mt-1">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {selectedLocation.neighborhood}
+                  <div className="flex items-center text-base md:text-sm text-gray-600 mt-2">
+                    <MapPin className="w-5 h-5 md:w-4 md:h-4 mr-1 flex-shrink-0" />
+                    <span className="break-words">{selectedLocation.neighborhood}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{selectedLocation.address}</p>
+                  <p className="text-sm md:text-xs text-gray-500 mt-1 break-words">{selectedLocation.address}</p>
                 </div>
                 <button
                   onClick={() => setSelectedLocation(null)}
-                  className="text-gray-400 hover:text-gray-600 p-1"
+                  className="text-gray-400 hover:text-gray-600 p-2 flex-shrink-0"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6 md:w-5 md:h-5" />
                 </button>
               </div>
               
@@ -376,14 +387,14 @@ export default function Map() {
                     const isFav = isFavorited(item._id);
                     
                     return (
-                      <div key={item._id} className="border-b border-gray-100 last:border-b-0 pb-4 last:pb-0">
-                        <div className="flex gap-3">
+                      <div key={item._id} className="border-b border-gray-100 last:border-b-0 pb-4 md:pb-4 last:pb-0">
+                        <div className="flex gap-3 md:gap-3">
                           {item.image && (
                             <div className="flex-shrink-0">
                               <img
                                 src={item.image}
                                 alt={item.itemName}
-                                className="w-20 h-20 object-cover rounded-lg"
+                                className="w-24 h-24 md:w-20 md:h-20 object-cover rounded-lg"
                                 loading="lazy"
                                 onError={(e) => {
                                   const img = e.target as HTMLImageElement;
@@ -393,26 +404,26 @@ export default function Map() {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-wingman-orange mb-1">{item.itemName}</h4>
+                            <h4 className="font-medium text-wingman-orange mb-2 text-lg md:text-base leading-tight">{item.itemName}</h4>
                             {item.description && (
-                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{item.description}</p>
+                              <p className="text-base md:text-sm text-gray-600 mb-3 line-clamp-3 md:line-clamp-2 leading-relaxed">{item.description}</p>
                             )}
                             
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-3">
                               {item.glutenFree && (
-                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                <span className="text-sm md:text-xs bg-green-100 text-green-800 px-3 py-1 md:px-2 md:py-0.5 rounded font-medium">
                                   GF
                                 </span>
                               )}
-                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded capitalize">
+                              <span className="text-sm md:text-xs bg-gray-100 text-gray-700 px-3 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium">
                                 {item.type}
                               </span>
                             </div>
                             
                             {/* Rating and Favorite Controls */}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">
-                                <span className="text-sm text-gray-700 mr-1">Rate:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base md:text-sm text-gray-700 font-medium">Rate:</span>
                                 <div 
                                   className="flex items-center space-x-0.5"
                                   onMouseLeave={() => setHoveredRating(null)}
@@ -429,13 +440,13 @@ export default function Map() {
                                         onMouseEnter={() => setHoveredRating(item._id + starNumber)}
                                         onClick={() => handleRatingClick(item._id, starNumber)}
                                       >
-                                        <Star className={`w-4 h-4 ${
+                                        <Star className={`w-6 h-6 md:w-4 md:h-4 ${
                                           shouldHighlight ? 'text-yellow-200' : 'text-gray-300'
                                         }`} />
                                         
                                         {(filled || halfFilled || shouldHighlight) && (
                                           <Star
-                                            className={`w-4 h-4 fill-current absolute top-0 left-0 ${
+                                            className={`w-6 h-6 md:w-4 md:h-4 fill-current absolute top-0 left-0 ${
                                               shouldHighlight ? 'text-yellow-300' : 'text-yellow-400'
                                             }`}
                                             style={{
@@ -446,14 +457,14 @@ export default function Map() {
                                         
                                         {/* Half-star click areas */}
                                         <div 
-                                          className="absolute top-0 left-0 w-2 h-4 cursor-pointer"
+                                          className="absolute top-0 left-0 w-3 h-6 md:w-2 md:h-4 cursor-pointer"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleRatingClick(item._id, starNumber - 0.5);
                                           }}
                                         />
                                         <div 
-                                          className="absolute top-0 right-0 w-2 h-4 cursor-pointer"
+                                          className="absolute top-0 right-0 w-3 h-6 md:w-2 md:h-4 cursor-pointer"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleRatingClick(item._id, starNumber);
@@ -464,19 +475,19 @@ export default function Map() {
                                   })}
                                 </div>
                                 {userRating > 0 && (
-                                  <span className="text-sm text-gray-500 ml-1">({userRating})</span>
+                                  <span className="text-base md:text-sm text-gray-500 ml-2">({userRating})</span>
                                 )}
                               </div>
                               
                               <button
                                 onClick={() => handleFavoriteClick(item._id)}
-                                className={`p-2 rounded-full transition-colors ${
+                                className={`p-3 md:p-2 rounded-full transition-colors ${
                                   isFav 
                                     ? 'text-red-500 hover:text-red-600' 
                                     : 'text-gray-400 hover:text-red-500'
                                 }`}
                               >
-                                <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
+                                <Heart className={`w-6 h-6 md:w-5 md:h-5 ${isFav ? 'fill-current' : ''}`} />
                               </button>
                             </div>
                           </div>
@@ -486,6 +497,71 @@ export default function Map() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* Mobile Filters Modal */}
+        {showMobileFilters && (
+          <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+            <div className="bg-white w-full max-h-[80vh] rounded-t-xl overflow-hidden">
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Filters & Search</h3>
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="text-gray-400 hover:text-gray-600 p-2"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+                {/* Search */}
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search locations..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Filters */}
+                <Filters
+                  selectedNeighborhood={selectedNeighborhood}
+                  setSelectedNeighborhood={setSelectedNeighborhood}
+                  glutenFree={glutenFree}
+                  setGlutenFree={setGlutenFree}
+                  allowMinors={allowMinors}
+                  setAllowMinors={setAllowMinors}
+                  allowTakeout={allowTakeout}
+                  setAllowTakeout={setAllowTakeout}
+                  allowDelivery={allowDelivery}
+                  setAllowDelivery={setAllowDelivery}
+                  isOpenNow={isOpenNow}
+                  setIsOpenNow={setIsOpenNow}
+                  neighborhoods={neighborhoods || []}
+                />
+                
+                {/* Results count */}
+                <div className="text-base text-gray-500 mt-6 mb-4">
+                  {locations?.length || 0} locations found
+                </div>
+                
+                {/* Quick actions */}
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="flex-1 bg-wingman-purple text-white py-3 px-4 rounded-lg font-medium text-lg hover:bg-wingman-purple-light transition-colors"
+                  >
+                    View Map
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
