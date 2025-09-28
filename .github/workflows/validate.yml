@@ -23,17 +23,11 @@ jobs:
     
     - name: Lint
       run: npm run lint
-
-    - name: Authenticate with Convex
-      run: npx convex dev --once
     
     - name: Validate Convex deployment (dry run)
       run: npx convex deploy --dry-run
       env:
         CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        VITE_CONVEX_URL: https://tame-bass-671.convex.cloud
     
     - name: Build Frontend (validation)
       run: npm run build
-      env:
-        VITE_CONVEX_URL: https://tame-bass-671.convex.cloud
