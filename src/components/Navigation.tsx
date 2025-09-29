@@ -72,8 +72,20 @@ export default function Navigation() {
             {/* Sign In temporarily disabled */}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          {/* Mobile menu buttons */}
+          <div className="md:hidden flex items-center space-x-2">
+            <Link
+              to="/donate"
+              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                isActive('/donate') 
+                  ? 'bg-wingman-pink text-white' 
+                  : 'text-gray-600 hover:text-wingman-pink hover:bg-wingman-pink hover:bg-opacity-10'
+              }`}
+            >
+              <DollarSign className="w-4 h-4 mr-1" />
+              Donate
+            </Link>
+            
             {isActive('/') && (
               <button
                 onClick={handleMobileFilterClick}
