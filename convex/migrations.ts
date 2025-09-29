@@ -172,3 +172,83 @@ export const migrateImagesOnly = mutation({
     };
   },
 });
+
+// Migrate only types for existing items - creates additional locationItems for multi-type items
+export const migrateTypesOnly = mutation({
+  args: {
+    items: v.array(v.object({
+      restaurantName: v.string(),
+      itemName: v.string(),
+      description: v.optional(v.string()),
+      altDescription: v.optional(v.string()),
+      type: v.string(),
+      glutenFree: v.boolean(),
+      url: v.optional(v.string()),
+      image: v.optional(v.string()),
+      imageUrl: v.optional(v.string()),
+    }))
+  },
+  handler: async (ctx, { items }) => {
+    let createdCount = 0;
+    let notFoundCount = 0;
+    let skippedCount = 0;
+    
+    for (const item of items) {
+      // Find the location by restaurant name
+      const location = await ctx.db
+        .query("locations")
+        .filter((q) => q.eq(q.field("restaurantName"), item.restaurantName))
+        .first();
+      
+      if (!location) {
+        console.log(`Location not found: ${item.restaurantName}`);
+        notFoundCount++;
+        continue;
+      }
+      
+      // Check if this exact combination already exists
+      const existingItem = await ctx.db
+        .query("locationItems")
+        .filter((q) => 
+          q.and(
+            q.eq(q.field("locationId"), location._id),
+            q.eq(q.field("itemName"), item.itemName),
+            q.eq(q.field("type"), item.type)
+          )
+        )
+        .first();
+      
+      if (existingItem) {
+        console.log(`Item already exists: ${item.restaurantName} - ${item.itemName} (${item.type})`);
+        skippedCount++;
+        continue;
+      }
+      
+      // Create the new locationItem with the specific type
+      await ctx.db.insert("locationItems", {
+        locationId: location._id,
+        itemName: item.itemName,
+        description: item.description,
+        altDescription: item.altDescription,
+        type: item.type as "meat" | "vegetarian" | "vegan",
+        glutenFree: item.glutenFree,
+        url: item.url,
+        image: item.image,
+        imageUrl: item.imageUrl,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      
+      createdCount++;
+      console.log(`Created: ${item.restaurantName} - ${item.itemName} (${item.type})`);
+    }
+    
+    return { 
+      success: true, 
+      created: createdCount,
+      skipped: skippedCount,
+      notFound: notFoundCount,
+      total: items.length
+    };
+  },
+});

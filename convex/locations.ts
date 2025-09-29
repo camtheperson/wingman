@@ -277,3 +277,45 @@ export const updateItemImage = mutation({
     return { success: true };
   },
 });
+
+// Get count of locations
+export const count = query({
+  args: {},
+  handler: async (ctx) => {
+    const locations = await ctx.db.query("locations").collect();
+    return locations.length;
+  },
+});
+
+// Get count of location items
+export const countItems = query({
+  args: {},
+  handler: async (ctx) => {
+    const items = await ctx.db.query("locationItems").collect();
+    return items.length;
+  },
+});
+
+// Get all locations with their items for analysis
+export const getAllLocationsWithItems = query({
+  args: {},
+  handler: async (ctx) => {
+    const locations = await ctx.db.query("locations").collect();
+    
+    const locationsWithItems = await Promise.all(
+      locations.map(async (location) => {
+        const items = await ctx.db
+          .query("locationItems")
+          .withIndex("by_location_id", (q) => q.eq("locationId", location._id))
+          .collect();
+        
+        return {
+          ...location,
+          items
+        };
+      })
+    );
+    
+    return locationsWithItems;
+  },
+});
