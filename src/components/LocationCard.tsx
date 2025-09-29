@@ -1,5 +1,6 @@
-import React from 'react';
-import { Star, MapPin } from 'lucide-react';
+// import React from 'react';
+import { MapPin } from 'lucide-react';
+// import { Star } from 'lucide-react'; // Commented out while rating is disabled
 
 interface LocationCardProps {
   location: {
@@ -77,13 +78,13 @@ function isLocationOpenNow(hours?: Array<{ dayOfWeek: string; date: string; hour
 
 export default function LocationCard({ location, onClick, isSelected }: LocationCardProps) {
   const isOpenNow = isLocationOpenNow(location.hours);
-  const [hoveredRating, setHoveredRating] = React.useState<number | null>(null);
+  // const [hoveredRating, setHoveredRating] = React.useState<number | null>(null);
 
-  const handleRatingClick = (rating: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    // Rating functionality temporarily disabled
-    console.log('Rating clicked:', rating);
-  };
+  // const handleRatingClick = (rating: number, e: React.MouseEvent) => {
+  //   e.stopPropagation(); // Prevent card click
+  //   // Rating functionality temporarily disabled
+  //   console.log('Rating clicked:', rating);
+  // };
 
   return (
     <div
@@ -108,9 +109,8 @@ export default function LocationCard({ location, onClick, isSelected }: Location
         <span className="break-words">{location.neighborhood}</span>
       </div>
       
-      {/* Google Maps Style Rating */}
-      <div className="flex items-center mb-3 md:mb-2">
-        {/* Always show rating section, even for 0 ratings */}
+      {/* Google Maps Style Rating - COMMENTED OUT FOR NOW */}
+      {/* <div className="flex items-center mb-3 md:mb-2">
         <span className="text-base md:text-sm font-medium text-gray-900 mr-2 md:mr-1">
           {location.averageRating ? location.averageRating.toFixed(1) : '0.0'}
         </span>
@@ -133,12 +133,10 @@ export default function LocationCard({ location, onClick, isSelected }: Location
                 onMouseEnter={() => setHoveredRating(starNumber)}
                 onClick={(e) => handleRatingClick(starNumber, e)}
               >
-                {/* Background star (empty) */}
                 <Star className={`w-5 h-5 md:w-4 md:h-4 ${
                   shouldHighlight ? 'text-yellow-200' : 'text-gray-300'
                 }`} />
                 
-                {/* Foreground star (filled or half-filled) */}
                 {(filled || halfFilled || shouldHighlight) && (
                   <Star
                     className={`w-5 h-5 md:w-4 md:h-4 fill-current absolute top-0 left-0 ${
@@ -150,7 +148,6 @@ export default function LocationCard({ location, onClick, isSelected }: Location
                   />
                 )}
                 
-                {/* Half-star click areas */}
                 <div 
                   className="absolute top-0 left-0 w-2.5 h-5 md:w-2 md:h-4 cursor-pointer"
                   onClick={(e) => {
@@ -172,7 +169,7 @@ export default function LocationCard({ location, onClick, isSelected }: Location
         <span className="text-base md:text-sm text-gray-500">
           ({location.reviewCount || 0} review{(location.reviewCount || 0) !== 1 ? 's' : ''})
         </span>
-      </div>
+      </div> */}
       
       {location.items && location.items.length > 0 && (
         <div className="space-y-4 md:space-y-3">
