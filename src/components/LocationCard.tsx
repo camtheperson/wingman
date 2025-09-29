@@ -1,6 +1,5 @@
-// import React from 'react';
 import { MapPin } from 'lucide-react';
-// import { Star } from 'lucide-react'; // Commented out while rating is disabled
+import RatingDisplay from './RatingDisplay';
 
 interface LocationCardProps {
   location: {
@@ -109,67 +108,16 @@ export default function LocationCard({ location, onClick, isSelected }: Location
         <span className="break-words">{location.neighborhood}</span>
       </div>
       
-      {/* Google Maps Style Rating - COMMENTED OUT FOR NOW */}
-      {/* <div className="flex items-center mb-3 md:mb-2">
-        <span className="text-base md:text-sm font-medium text-gray-900 mr-2 md:mr-1">
-          {location.averageRating ? location.averageRating.toFixed(1) : '0.0'}
-        </span>
-        <div 
-          className="flex items-center space-x-1 md:space-x-0.5 mr-2 md:mr-1"
-          onMouseLeave={() => setHoveredRating(null)}
-        >
-          {[1, 2, 3, 4, 5].map((starNumber) => {
-            const rating = location.averageRating || 0;
-            const filled = rating >= starNumber;
-            const halfFilled = rating >= starNumber - 0.5 && rating < starNumber;
-            
-            // Progressive hover effect: highlight up to the hovered star
-            const shouldHighlight = hoveredRating !== null && starNumber <= hoveredRating;
-            
-            return (
-              <div
-                key={starNumber}
-                className="relative cursor-pointer"
-                onMouseEnter={() => setHoveredRating(starNumber)}
-                onClick={(e) => handleRatingClick(starNumber, e)}
-              >
-                <Star className={`w-5 h-5 md:w-4 md:h-4 ${
-                  shouldHighlight ? 'text-yellow-200' : 'text-gray-300'
-                }`} />
-                
-                {(filled || halfFilled || shouldHighlight) && (
-                  <Star
-                    className={`w-5 h-5 md:w-4 md:h-4 fill-current absolute top-0 left-0 ${
-                      shouldHighlight ? 'text-yellow-300' : 'text-yellow-400'
-                    }`}
-                    style={{
-                      clipPath: halfFilled && !shouldHighlight ? 'inset(0 50% 0 0)' : 'none'
-                    }}
-                  />
-                )}
-                
-                <div 
-                  className="absolute top-0 left-0 w-2.5 h-5 md:w-2 md:h-4 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRatingClick(starNumber - 0.5, e);
-                  }}
-                />
-                <div 
-                  className="absolute top-0 right-0 w-2.5 h-5 md:w-2 md:h-4 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRatingClick(starNumber, e);
-                  }}
-                />
-              </div>
-            );
-          })}
+      {/* Google Maps Style Rating */}
+      {location.averageRating !== undefined && (
+        <div className="mb-3 md:mb-2">
+          <RatingDisplay
+            averageRating={location.averageRating}
+            ratingCount={location.reviewCount || 0}
+            size="sm"
+          />
         </div>
-        <span className="text-base md:text-sm text-gray-500">
-          ({location.reviewCount || 0} review{(location.reviewCount || 0) !== 1 ? 's' : ''})
-        </span>
-      </div> */}
+      )}
       
       {location.items && location.items.length > 0 && (
         <div className="space-y-4 md:space-y-3">

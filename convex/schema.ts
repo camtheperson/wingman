@@ -70,7 +70,7 @@ export default defineSchema({
   itemRatings: defineTable({
     userId: v.string(), // Auth user ID
     itemId: v.id("locationItems"),
-    rating: v.number(), // 0-5 in 0.5 increments
+    rating: v.number(), // 1-5 (whole numbers only, averages stored as decimals)
     review: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),

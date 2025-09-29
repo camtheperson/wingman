@@ -1,3 +1,6 @@
+import { Authenticated, Unauthenticated } from 'convex/react';
+import { SignInButton } from '@clerk/clerk-react';
+
 interface FiltersProps {
   selectedNeighborhood: string;
   setSelectedNeighborhood: (value: string) => void;
@@ -13,6 +16,8 @@ interface FiltersProps {
   setIsOpenNow: (value: boolean) => void;
   selectedType: string;
   setSelectedType: (value: string) => void;
+  favoritesOnly: boolean;
+  setFavoritesOnly: (value: boolean) => void;
   neighborhoods: string[];
 }
 
@@ -31,6 +36,8 @@ export default function Filters({
   setIsOpenNow,
   selectedType,
   setSelectedType,
+  favoritesOnly,
+  setFavoritesOnly,
   neighborhoods,
 }: FiltersProps) {
   const clearFilters = () => {
@@ -41,6 +48,7 @@ export default function Filters({
     setAllowDelivery(false);
     setIsOpenNow(false);
     setSelectedType('');
+    setFavoritesOnly(false);
   };
 
   return (
@@ -64,6 +72,36 @@ export default function Filters({
         />
         <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Open Now</span>
       </label>
+
+      <Authenticated>
+        <label className="flex items-center py-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={favoritesOnly}
+            onChange={(e) => setFavoritesOnly(e.target.checked)}
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+          />
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">❤️ My Favorites Only</span>
+        </label>
+      </Authenticated>
+
+      <Unauthenticated>
+        <div className="flex items-center py-1">
+          <input
+            type="checkbox"
+            disabled
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 bg-gray-100 cursor-not-allowed"
+          />
+          <span className="text-base md:text-sm text-gray-400 font-medium md:font-normal">
+            ❤️ My Favorites Only •{' '}
+            <SignInButton>
+              <button className="text-wingman-purple hover:text-wingman-purple-light underline">
+                Sign in
+              </button>
+            </SignInButton>
+          </span>
+        </div>
+      </Unauthenticated>
 
       {/* Neighborhood Filter */}
       <div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Search, Filter } from 'lucide-react';
@@ -14,6 +14,7 @@ export default function List() {
   const [allowDelivery, setAllowDelivery] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [selectedType, setSelectedType] = useState('');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'neighborhood'>('name');
 
@@ -26,9 +27,18 @@ export default function List() {
     allowDelivery: allowDelivery || undefined,
     isOpenNow: isOpenNow || undefined,
     type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
+    favoritesOnly: favoritesOnly || undefined,
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
+  const favoriteItems = useQuery(api.favorites.getFavorites, {});
+
+  // Clear favorites filter when user logs out
+  useEffect(() => {
+    if (favoritesOnly && (!favoriteItems || favoriteItems.length === 0)) {
+      setFavoritesOnly(false);
+    }
+  }, [favoriteItems, favoritesOnly, setFavoritesOnly]);
 
   // Sort locations based on selected criteria
   const sortedLocations = locations?.filter(location => location != null).sort((a, b) => {
@@ -110,6 +120,8 @@ export default function List() {
               setIsOpenNow={setIsOpenNow}
               selectedType={selectedType}
               setSelectedType={setSelectedType}
+              favoritesOnly={favoritesOnly}
+              setFavoritesOnly={setFavoritesOnly}
               neighborhoods={neighborhoods || []}
             />
           </div>
@@ -151,6 +163,7 @@ export default function List() {
               setAllowDelivery(false);
               setIsOpenNow(false);
               setSelectedType('');
+              setFavoritesOnly(false);
             }}
             className="text-red-600 hover:text-red-700"
           >

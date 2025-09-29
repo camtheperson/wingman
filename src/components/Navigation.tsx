@@ -1,5 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { List, Map, DollarSign, Filter } from 'lucide-react';
+import { SignInButton, UserButton } from '@clerk/clerk-react';
+import { Authenticated, Unauthenticated } from 'convex/react';
 
 export default function Navigation() {
   const location = useLocation();
@@ -70,6 +72,12 @@ export default function Navigation() {
             </Link>
 
             {/* Sign In temporarily disabled */}
+            <Unauthenticated>
+              <SignInButton />
+            </Unauthenticated>  
+            <Authenticated>
+              <UserButton />
+            </Authenticated>
           </div>
 
           {/* Mobile menu buttons */}

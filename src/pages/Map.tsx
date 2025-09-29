@@ -3,9 +3,10 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { Filter, Search, Star, Heart, X, MapPin } from 'lucide-react';
+import { Filter, Search, X, MapPin } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
+import ItemCard from '../components/ItemCard';
 import type { LocationWithItems, LocationItem, JsonLocationPin } from '../types';
 import itemsData from '../../data/items.json';
 import 'leaflet/dist/leaflet.css';
@@ -67,10 +68,10 @@ export default function Map() {
   const [allowDelivery, setAllowDelivery] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [selectedType, setSelectedType] = useState('');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
-  const [hoveredRating, setHoveredRating] = useState<string | null>(null);
 
   // Listen for mobile filter button clicks from Navigation
   useEffect(() => {
@@ -81,6 +82,8 @@ export default function Map() {
     window.addEventListener('openMobileFilters', handleMobileFilterClick);
     return () => window.removeEventListener('openMobileFilters', handleMobileFilterClick);
   }, []);
+
+
 
   // Process JSON data to create immediate pins with filtering
   const immediatePins: JsonLocationPin[] = useMemo(() => {
@@ -163,9 +166,9 @@ export default function Map() {
       
       const matchesAllowDelivery = !allowDelivery || location.allowDelivery === true;
       
-      // Skip "open now" filter for immediate pins - let Convex handle this
-      if (isOpenNow) {
-        return; // Don't show immediate pins when "open now" filter is active
+      // Skip "open now" and "favorites only" filters for immediate pins - let Convex handle these
+      if (isOpenNow || favoritesOnly) {
+        return; // Don't show immediate pins when these filters are active
       }
       
       if (!matchesSearch || !matchesNeighborhood || !matchesAllowMinors || 
@@ -197,7 +200,7 @@ export default function Map() {
     });
     
     return pins;
-  }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType]);
+  }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
 
   const locations = useQuery(api.locations.getLocations, {
     searchTerm: searchTerm || undefined,
@@ -208,38 +211,38 @@ export default function Map() {
     allowDelivery: allowDelivery || undefined,
     isOpenNow: isOpenNow || undefined,
     type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
+    favoritesOnly: favoritesOnly || undefined,
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
 
+  // Get favorited items for the current user
+  const favoriteItems = useQuery(api.favorites.getFavorites, {});
+
+  // Clear favorites filter when user logs out (favoriteItems becomes null/empty)
+  useEffect(() => {
+    if (favoritesOnly && (!favoriteItems || favoriteItems.length === 0)) {
+      setFavoritesOnly(false);
+    }
+  }, [favoriteItems, favoritesOnly, setFavoritesOnly]);
+
   const handleLocationClick = (location: LocationWithItems) => {
     setSelectedLocation(location);
+  };
+
+  // Check if a location has any favorited items
+  const locationHasFavorites = (location: LocationWithItems): boolean => {
+    if (!favoriteItems || !location.items) return false;
+    
+    const favoriteItemIds = new Set(favoriteItems.map(fav => fav.itemId));
+    return location.items.some(item => favoriteItemIds.has(item._id));
   };
 
   const filteredLocations = locations?.filter((location) => 
     location != null && location.latitude != null && location.longitude != null
   ) || [];
   
-  // Helper functions for ratings and favorites (temporarily disabled)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getUserRating = (_itemId: string) => {
-    return 0; // Always return 0 rating when auth is disabled
-  };
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const isFavorited = (_itemId: string) => {
-    return false; // Always return false when auth is disabled
-  };
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleRatingClick = async (_itemId: string, _rating: number) => {
-    console.log('Rating functionality temporarily disabled');
-  };
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleFavoriteClick = async (_itemId: string) => {
-    console.log('Favorites functionality temporarily disabled');
-  };
+
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -282,6 +285,8 @@ export default function Map() {
               setIsOpenNow={setIsOpenNow}
               selectedType={selectedType}
               setSelectedType={setSelectedType}
+              favoritesOnly={favoritesOnly}
+              setFavoritesOnly={setFavoritesOnly}
               neighborhoods={neighborhoods || []}
             />
           )}
@@ -375,7 +380,13 @@ export default function Map() {
             <Marker
               key={location._id}
               position={[location.latitude!, location.longitude!]}
-              icon={selectedLocation?._id === location._id ? favoriteMarkerIcon : defaultMarkerIcon}
+              icon={
+                selectedLocation?._id === location._id 
+                  ? favoriteMarkerIcon 
+                  : locationHasFavorites(location)
+                    ? favoriteMarkerIcon
+                    : defaultMarkerIcon
+              }
               eventHandlers={{
                 click: () => handleLocationClick(location),
               }}
@@ -415,119 +426,9 @@ export default function Map() {
               
               {selectedLocation.items && selectedLocation.items.length > 0 && (
                 <div className="space-y-4 mt-4">
-                  {selectedLocation.items.map((item: LocationItem) => {
-                    const userRating = getUserRating(item._id);
-                    const isFav = isFavorited(item._id);
-                    
-                    return (
-                      <div key={item._id} className="border-b border-gray-100 last:border-b-0 pb-4 md:pb-4 last:pb-0">
-                        <div className="flex gap-3 md:gap-3">
-                          {item.image && (
-                            <div className="flex-shrink-0">
-                              <img
-                                src={item.image}
-                                alt={item.itemName}
-                                className="w-24 h-24 md:w-20 md:h-20 object-cover rounded-lg"
-                                loading="lazy"
-                                onError={(e) => {
-                                  const img = e.target as HTMLImageElement;
-                                  img.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-wingman-orange mb-2 text-lg md:text-base leading-tight">{item.itemName}</h4>
-                            {item.description && (
-                              <p className="text-base md:text-sm text-gray-600 mb-3 leading-relaxed">{item.description}</p>
-                            )}
-                            
-                            <div className="flex items-center gap-2 mb-3">
-                              {item.glutenFree && (
-                                <span className="text-sm md:text-xs bg-green-100 text-green-800 px-3 py-1 md:px-2 md:py-0.5 rounded font-medium">
-                                  GF
-                                </span>
-                              )}
-                              <span className="text-sm md:text-xs bg-gray-100 text-gray-700 px-3 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium">
-                                {item.type}
-                              </span>
-                            </div>
-                            
-                            {/* Rating and Favorite Controls */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-base md:text-sm text-gray-700 font-medium">Rate:</span>
-                                <div 
-                                  className="flex items-center space-x-0.5"
-                                  onMouseLeave={() => setHoveredRating(null)}
-                                >
-                                  {[1, 2, 3, 4, 5].map((starNumber) => {
-                                    const filled = userRating >= starNumber;
-                                    const halfFilled = userRating >= starNumber - 0.5 && userRating < starNumber;
-                                    const shouldHighlight = hoveredRating === item._id + starNumber;
-                                    
-                                    return (
-                                      <div
-                                        key={starNumber}
-                                        className="relative cursor-pointer"
-                                        onMouseEnter={() => setHoveredRating(item._id + starNumber)}
-                                        onClick={() => handleRatingClick(item._id, starNumber)}
-                                      >
-                                        <Star className={`w-6 h-6 md:w-4 md:h-4 ${
-                                          shouldHighlight ? 'text-yellow-200' : 'text-gray-300'
-                                        }`} />
-                                        
-                                        {(filled || halfFilled || shouldHighlight) && (
-                                          <Star
-                                            className={`w-6 h-6 md:w-4 md:h-4 fill-current absolute top-0 left-0 ${
-                                              shouldHighlight ? 'text-yellow-300' : 'text-yellow-400'
-                                            }`}
-                                            style={{
-                                              clipPath: halfFilled && !shouldHighlight ? 'inset(0 50% 0 0)' : 'none'
-                                            }}
-                                          />
-                                        )}
-                                        
-                                        {/* Half-star click areas */}
-                                        <div 
-                                          className="absolute top-0 left-0 w-3 h-6 md:w-2 md:h-4 cursor-pointer"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRatingClick(item._id, starNumber - 0.5);
-                                          }}
-                                        />
-                                        <div 
-                                          className="absolute top-0 right-0 w-3 h-6 md:w-2 md:h-4 cursor-pointer"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRatingClick(item._id, starNumber);
-                                          }}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                {userRating > 0 && (
-                                  <span className="text-base md:text-sm text-gray-500 ml-2">({userRating})</span>
-                                )}
-                              </div>
-                              
-                              <button
-                                onClick={() => handleFavoriteClick(item._id)}
-                                className={`p-3 md:p-2 rounded-full transition-colors ${
-                                  isFav 
-                                    ? 'text-red-500 hover:text-red-600' 
-                                    : 'text-gray-400 hover:text-red-500'
-                                }`}
-                              >
-                                <Heart className={`w-6 h-6 md:w-5 md:h-5 ${isFav ? 'fill-current' : ''}`} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {selectedLocation.items.map((item: LocationItem) => (
+                    <ItemCard key={item._id} item={item} compact={true} />
+                  ))}
                 </div>
               )}
             </div>
@@ -579,6 +480,8 @@ export default function Map() {
                   setIsOpenNow={setIsOpenNow}
                   selectedType={selectedType}
                   setSelectedType={setSelectedType}
+                  favoritesOnly={favoritesOnly}
+                  setFavoritesOnly={setFavoritesOnly}
                   neighborhoods={neighborhoods || []}
                 />
                 
