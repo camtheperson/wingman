@@ -7,7 +7,7 @@ function App() {
     <Router basename="/wingman">
         <div className="min-h-screen bg-gray-50 flex flex-col">
           <Navigation />
-          <main className="flex-1 min-h-0">
+          <main className="flex-1 min-h-0 relative">
             <Routes>
               <Route path="/" element={<Map />} />
               <Route path="/list" element={<List />} />

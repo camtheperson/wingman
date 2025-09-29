@@ -21,6 +21,13 @@ body {
   min-height: 100vh;
 }
 
+/* Ensure body doesn't interfere with nav safe area on iOS */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: 0; /* Let the nav handle safe area instead */
+  }
+}
+
 /* Immediate map markers - slightly faded to show they're loading */
 .immediate-marker {
   opacity: 0.8;
@@ -96,4 +103,90 @@ button:focus-visible {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+}
+
+/* iPhone-Specific Navigation Fixes */
+@supports (padding: env(safe-area-inset-top)) {
+  /* Enhanced iOS device detection and safe area handling */
+  nav {
+    /* Ensure nav has proper stacking context */
+    position: relative;
+    z-index: 1000;
+  }
+  
+  /* Fallback for devices that don't report safe area properly */
+  @media screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) {
+    /* iPhone 14 Pro */
+    .safe-area-top {
+      padding-top: max(env(safe-area-inset-top), 47px);
+    }
+  }
+  
+  @media screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+    /* iPhone 14 Pro Max */
+    .safe-area-top {
+      padding-top: max(env(safe-area-inset-top), 47px);
+    }
+  }
+  
+  @media screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) {
+    /* iPhone 14 */
+    .safe-area-top {
+      padding-top: max(env(safe-area-inset-top), 47px);
+    }
+  }
+  
+  @media screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+    /* iPhone 14 Plus */
+    .safe-area-top {
+      padding-top: max(env(safe-area-inset-top), 47px);
+    }
+  }
+}
+
+/* Additional iPhone viewport fixes */
+@media screen and (max-width: 430px) and (-webkit-min-device-pixel-ratio: 2) {
+  /* All iPhones - ensure minimum top spacing */
+  .safe-area-top {
+    padding-top: max(env(safe-area-inset-top), 20px);
+    /* Ensure we always have some top padding on iPhone */
+    min-height: calc(env(safe-area-inset-top) + 64px);
+  }
+  
+  /* Force hardware acceleration for smoother rendering */
+  nav {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
+  /* Prevent content from going under the status bar */
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Landscape orientation fixes for iPhone */
+@media screen and (max-height: 430px) and (orientation: landscape) and (-webkit-min-device-pixel-ratio: 2) {
+  .safe-area-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+  
+  /* Adjust navigation height in landscape */
+  nav .flex.justify-between.items-center {
+    min-height: calc(env(safe-area-inset-top) + 48px);
+  }
+}
+
+/* Specific fix for Safari on iOS */
+@media screen and (-webkit-min-device-pixel-ratio: 2) {
+  /* Ensure proper viewport handling */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Prevent zoom on form inputs */
+  input, select, textarea {
+    font-size: 16px;
+  }
 }
