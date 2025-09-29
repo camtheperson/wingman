@@ -5,7 +5,7 @@ export type LocationItem = {
   locationId: Id<'locations'>;
   itemName: string;
   description?: string;
-  type: string;
+  type: 'meat' | 'vegetarian' | 'vegan';
   glutenFree: boolean;
   image?: string;
   averageRating?: number;

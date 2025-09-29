@@ -49,6 +49,45 @@ class ImageScraper {
     }
   }
 
+  async updateLocalItemsJson(items) {
+    console.log('Updating local items.json file...');
+    try {
+      // Create a map of items by their unique identifier (restaurant + item name)
+      const itemMap = new Map();
+      items.forEach(item => {
+        const key = `${item.locationName}_${item.itemName}`;
+        itemMap.set(key, item);
+      });
+
+      // Load existing items.json
+      let existingItems = [];
+      if (fs.existsSync(this.dataPath)) {
+        const data = fs.readFileSync(this.dataPath, 'utf8');
+        existingItems = JSON.parse(data);
+      }
+
+      // Update existing items with image paths
+      const updatedItems = existingItems.map(item => {
+        const key = `${item.restaurantName}_${item.itemName}`;
+        const updatedItem = itemMap.get(key);
+        if (updatedItem && updatedItem.image) {
+          return {
+            ...item,
+            image: updatedItem.image,
+            imageUrl: updatedItem.imageUrl
+          };
+        }
+        return item;
+      });
+
+      // Write back to items.json
+      fs.writeFileSync(this.dataPath, JSON.stringify(updatedItems, null, 2));
+      console.log('✅ Successfully updated local items.json file');
+    } catch (error) {
+      console.error('Error updating local items.json:', error);
+    }
+  }
+
   async updateItemImage(itemId, imageUrl, imagePath) {
     console.log(`Updating item ${itemId} with image: ${imagePath}`);
     try {
@@ -176,13 +215,13 @@ class ImageScraper {
     
     if (!item.url) {
       console.log('No URL found for item, skipping...');
-      return false;
+      return { success: false, item: null };
     }
 
     // Check if image already exists and has correct path
     if (item.image && item.image.startsWith('/wingman/images/')) {
       console.log('Image already exists with correct path, skipping...');
-      return false;
+      return { success: false, item: null };
     }
 
     try {
@@ -191,19 +230,27 @@ class ImageScraper {
       
       if (!imageUrl) {
         console.log('No image found on page');
-        return false;
+        return { success: false, item: null };
       }
 
       // Generate filename
       const filename = this.generateFilename(locationName, item.itemName, imageUrl);
+      const imagePath = `/wingman/images/${filename}`;
       
       // Check if file already exists
       const filePath = path.join(this.imagesDir, filename);
       if (fs.existsSync(filePath)) {
         console.log(`File already exists: ${filename}`);
         // Update database with existing image
-        await this.updateItemImage(item._id, imageUrl, `/wingman/images/${filename}`);
-        return true;
+        await this.updateItemImage(item._id, imageUrl, imagePath);
+        return { 
+          success: true, 
+          item: { 
+            ...item, 
+            image: imagePath,
+            imageUrl: imageUrl 
+          }
+        };
       }
 
       // Download image
@@ -211,17 +258,24 @@ class ImageScraper {
       
       if (downloadedPath) {
         // Update database with new image
-        await this.updateItemImage(item._id, imageUrl, `/wingman/images/${filename}`);
+        await this.updateItemImage(item._id, imageUrl, imagePath);
         console.log(`✅ Successfully processed image for ${item.itemName}`);
-        return true;
+        return { 
+          success: true, 
+          item: { 
+            ...item, 
+            image: imagePath,
+            imageUrl: imageUrl 
+          }
+        };
       } else {
         console.log('Failed to download image');
-        return false;
+        return { success: false, item: null };
       }
 
     } catch (error) {
       console.error(`Error processing ${locationName} - ${item.itemName}:`, error.message);
-      return false;
+      return { success: false, item: null };
     }
   }
 
@@ -248,21 +302,25 @@ class ImageScraper {
 
     let processedCount = 0;
     let successCount = 0;
+    const updatedItems = [];
     
     // Process items in batches to avoid overwhelming the server
     for (let i = 0; i < allItems.length; i += this.concurrency) {
       const batch = allItems.slice(i, i + this.concurrency);
 
       const batchPromises = batch.map(async (item, batchIndex) => {
-        const success = await this.processLocationItem(
+        const result = await this.processLocationItem(
           item, 
           item.locationName, 
           i + batchIndex, 
           allItems.length
         );
         processedCount++;
-        if (success) successCount++;
-        return success;
+        if (result.success) {
+          successCount++;
+          updatedItems.push(result.item);
+        }
+        return result.success;
       });
 
       await Promise.all(batchPromises);
@@ -272,6 +330,11 @@ class ImageScraper {
         console.log(`\nWaiting ${this.delay}ms before next batch...`);
         await new Promise(resolve => setTimeout(resolve, this.delay));
       }
+    }
+
+    // Update local items.json file with the new image data
+    if (updatedItems.length > 0) {
+      await this.updateLocalItemsJson(updatedItems);
     }
 
     // Print summary

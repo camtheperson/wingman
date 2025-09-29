@@ -11,6 +11,7 @@ export const getLocations = query({
     allowTakeout: v.optional(v.boolean()),
     allowDelivery: v.optional(v.boolean()),
     isOpenNow: v.optional(v.boolean()),
+    type: v.optional(v.union(v.literal("meat"), v.literal("vegetarian"), v.literal("vegan"))),
   },
   handler: async (ctx, args) => {
     let locations = await ctx.db.query("locations").collect();
@@ -76,10 +77,16 @@ export const getLocations = query({
         const averageRating = itemCount > 0 ? totalRating / itemCount : 0;
         const reviewCount = totalReviews;
         
-        // Apply gluten-free filter to items
-        const filteredItems = args.glutenFree 
-          ? items.filter(item => item.glutenFree)
-          : items;
+        // Apply filters to items
+        let filteredItems = items;
+        
+        if (args.glutenFree) {
+          filteredItems = filteredItems.filter(item => item.glutenFree);
+        }
+        
+        if (args.type) {
+          filteredItems = filteredItems.filter(item => item.type === args.type);
+        }
         
         // Check if open now (simplified - you can enhance this logic)
         const isOpenNow = checkIfOpenNow(hours as Array<{
@@ -90,6 +97,11 @@ export const getLocations = query({
         }>);
         
         if (args.isOpenNow && !isOpenNow) {
+          return null;
+        }
+        
+        // If filtering by type or glutenFree and no items match, exclude this location
+        if ((args.type || args.glutenFree) && filteredItems.length === 0) {
           return null;
         }
         

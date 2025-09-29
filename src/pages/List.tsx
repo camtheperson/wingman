@@ -13,6 +13,7 @@ export default function List() {
   const [allowTakeout, setAllowTakeout] = useState(false);
   const [allowDelivery, setAllowDelivery] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
+  const [selectedType, setSelectedType] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'neighborhood'>('name');
 
@@ -24,6 +25,7 @@ export default function List() {
     allowTakeout: allowTakeout || undefined,
     allowDelivery: allowDelivery || undefined,
     isOpenNow: isOpenNow || undefined,
+    type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
@@ -106,6 +108,8 @@ export default function List() {
               setAllowDelivery={setAllowDelivery}
               isOpenNow={isOpenNow}
               setIsOpenNow={setIsOpenNow}
+              selectedType={selectedType}
+              setSelectedType={setSelectedType}
               neighborhoods={neighborhoods || []}
             />
           </div>
@@ -146,6 +150,7 @@ export default function List() {
               setAllowTakeout(false);
               setAllowDelivery(false);
               setIsOpenNow(false);
+              setSelectedType('');
             }}
             className="text-red-600 hover:text-red-700"
           >

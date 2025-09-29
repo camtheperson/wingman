@@ -203,7 +203,13 @@ export default function LocationCard({ location, onClick, isSelected }: Location
                         GF
                       </span>
                     )}
-                    <span className="text-sm md:text-xs bg-gray-100 text-gray-700 px-2 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium">
+                    <span className={`text-sm md:text-xs px-2 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium ${
+                      item.type === 'vegan' 
+                        ? 'bg-green-100 text-green-800' 
+                        : item.type === 'vegetarian' 
+                          ? 'bg-orange-100 text-orange-800' 
+                          : 'bg-red-100 text-red-800'
+                    }`}>
                       {item.type}
                     </span>
                   </div>

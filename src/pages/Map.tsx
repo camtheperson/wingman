@@ -66,6 +66,7 @@ export default function Map() {
   const [allowTakeout, setAllowTakeout] = useState(false);
   const [allowDelivery, setAllowDelivery] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
+  const [selectedType, setSelectedType] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
@@ -132,6 +133,7 @@ export default function Map() {
     allowTakeout: allowTakeout || undefined,
     allowDelivery: allowDelivery || undefined,
     isOpenNow: isOpenNow || undefined,
+    type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
@@ -204,6 +206,8 @@ export default function Map() {
               setAllowDelivery={setAllowDelivery}
               isOpenNow={isOpenNow}
               setIsOpenNow={setIsOpenNow}
+              selectedType={selectedType}
+              setSelectedType={setSelectedType}
               neighborhoods={neighborhoods || []}
             />
           )}
@@ -499,6 +503,8 @@ export default function Map() {
                   setAllowDelivery={setAllowDelivery}
                   isOpenNow={isOpenNow}
                   setIsOpenNow={setIsOpenNow}
+                  selectedType={selectedType}
+                  setSelectedType={setSelectedType}
                   neighborhoods={neighborhoods || []}
                 />
                 
