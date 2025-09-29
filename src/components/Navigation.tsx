@@ -18,8 +18,8 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-white shadow-sm border-b safe-area-top">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 safe-area-left safe-area-right">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
