@@ -84,9 +84,6 @@ export default function Map() {
 
   // Process JSON data to create immediate pins with filtering
   const immediatePins: JsonLocationPin[] = useMemo(() => {
-    const seenLocations = new Set<string>();
-    const pins: JsonLocationPin[] = [];
-    
     // Type the imported JSON data
     interface JsonItem {
       restaurantName: string;
@@ -94,36 +91,113 @@ export default function Map() {
       latitude: number;
       longitude: number;
       address: string;
+      type?: string;
       glutenFree?: boolean;
       allowMinors?: boolean;
       allowTakeout?: boolean;
       allowDelivery?: boolean;
+      hours?: Array<{
+        dayOfWeek: string;
+        date: string;
+        hours: string;
+      }>;
     }
     
+    // Note: "Open now" filter is disabled for immediate pins since it requires
+    // complex timezone logic. The detailed pins from Convex handle this properly.
+    
+    // Group items by restaurant to match Convex query logic
+    interface LocationGroup {
+      restaurantName: string;
+      neighborhood: string;
+      latitude: number;
+      longitude: number;
+      address: string;
+      allowMinors?: boolean;
+      allowTakeout?: boolean;
+      allowDelivery?: boolean;
+      hours?: JsonItem['hours'];
+      items: JsonItem[];
+    }
+    
+    const locationMap: Record<string, LocationGroup> = {};
+    
+    // Group all items by restaurant
     (itemsData as JsonItem[]).forEach((item) => {
-      if (item.latitude && item.longitude && item.restaurantName && !seenLocations.has(item.restaurantName)) {
-        // Apply basic filters from search criteria
-        const matchesSearch = !searchTerm || 
-          item.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.neighborhood.toLowerCase().includes(searchTerm.toLowerCase());
+      if (item.latitude && item.longitude && item.restaurantName) {
+        const key = item.restaurantName;
         
-        const matchesNeighborhood = !selectedNeighborhood || item.neighborhood === selectedNeighborhood;
-        
-        if (matchesSearch && matchesNeighborhood) {
-          seenLocations.add(item.restaurantName);
-          pins.push({
+        if (!locationMap[key]) {
+          locationMap[key] = {
             restaurantName: item.restaurantName,
             neighborhood: item.neighborhood,
             latitude: item.latitude,
             longitude: item.longitude,
-            address: item.address
-          });
+            address: item.address,
+            allowMinors: item.allowMinors,
+            allowTakeout: item.allowTakeout,
+            allowDelivery: item.allowDelivery,
+            hours: item.hours,
+            items: []
+          };
         }
+        
+        locationMap[key].items.push(item);
+      }
+    });
+    
+    const pins: JsonLocationPin[] = [];
+    
+    // Apply filters following the same logic as Convex query
+    Object.values(locationMap).forEach((location: LocationGroup) => {
+      // Apply location-level filters
+      const matchesSearch = !searchTerm || 
+        location.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        location.neighborhood.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesNeighborhood = !selectedNeighborhood || location.neighborhood === selectedNeighborhood;
+      
+      const matchesAllowMinors = !allowMinors || location.allowMinors === true;
+      
+      const matchesAllowTakeout = !allowTakeout || location.allowTakeout === true;
+      
+      const matchesAllowDelivery = !allowDelivery || location.allowDelivery === true;
+      
+      // Skip "open now" filter for immediate pins - let Convex handle this
+      if (isOpenNow) {
+        return; // Don't show immediate pins when "open now" filter is active
+      }
+      
+      if (!matchesSearch || !matchesNeighborhood || !matchesAllowMinors || 
+          !matchesAllowTakeout || !matchesAllowDelivery) {
+        return;
+      }
+      
+      // Apply item-level filters
+      let hasMatchingItems = true;
+      if (glutenFree || selectedType) {
+        const matchingItems = location.items.filter((item: JsonItem) => {
+          const itemMatchesGlutenFree = !glutenFree || item.glutenFree === true;
+          const itemMatchesType = !selectedType || item.type === selectedType;
+          return itemMatchesGlutenFree && itemMatchesType;
+        });
+        
+        hasMatchingItems = matchingItems.length > 0;
+      }
+      
+      if (hasMatchingItems) {
+        pins.push({
+          restaurantName: location.restaurantName,
+          neighborhood: location.neighborhood,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: location.address
+        });
       }
     });
     
     return pins;
-  }, [searchTerm, selectedNeighborhood]);
+  }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType]);
 
   const locations = useQuery(api.locations.getLocations, {
     searchTerm: searchTerm || undefined,
