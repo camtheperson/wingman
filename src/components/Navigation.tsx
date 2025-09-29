@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { List, Map, DollarSign, Filter } from 'lucide-react';
+import { List, Map, DollarSign, Filter, User } from 'lucide-react';
 import { SignInButton, UserButton } from '@clerk/clerk-react';
 import { Authenticated, Unauthenticated } from 'convex/react';
 
@@ -93,6 +93,18 @@ export default function Navigation() {
               <DollarSign className="w-4 h-4 mr-1" />
               Donate
             </Link>
+            
+            {/* User Authentication */}
+            <Unauthenticated>
+              <SignInButton>
+                <button className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-wingman-purple hover:bg-wingman-purple hover:bg-opacity-10">
+                  <User className="w-5 h-5" />
+                </button>
+              </SignInButton>
+            </Unauthenticated>
+            <Authenticated>
+              <UserButton />
+            </Authenticated>
             
             {isActive('/') && (
               <button
