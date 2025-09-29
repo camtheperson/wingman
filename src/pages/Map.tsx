@@ -361,7 +361,7 @@ export default function Map() {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-wingman-orange mb-2 text-lg md:text-base leading-tight">{item.itemName}</h4>
                             {item.description && (
-                              <p className="text-base md:text-sm text-gray-600 mb-3 line-clamp-3 md:line-clamp-2 leading-relaxed">{item.description}</p>
+                              <p className="text-base md:text-sm text-gray-600 mb-3 leading-relaxed">{item.description}</p>
                             )}
                             
                             <div className="flex items-center gap-2 mb-3">

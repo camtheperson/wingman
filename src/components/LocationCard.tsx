@@ -196,7 +196,7 @@ export default function LocationCard({ location, onClick, isSelected }: Location
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-wingman-orange text-base md:text-sm leading-tight">{item.itemName}</p>
                   {item.description && (
-                    <p className="text-gray-600 text-sm md:text-xs mt-2 md:mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-gray-600 text-sm md:text-xs mt-2 md:mt-1 leading-relaxed">
                       {item.description}
                     </p>
                   )}
