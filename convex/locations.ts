@@ -12,6 +12,7 @@ export const getLocations = query({
     allowDelivery: v.optional(v.boolean()),
     isOpenNow: v.optional(v.boolean()),
     type: v.optional(v.union(v.literal("meat"), v.literal("vegetarian"), v.literal("vegan"))),
+    favoritesOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     let locations = await ctx.db.query("locations").collect();
@@ -41,13 +42,31 @@ export const getLocations = query({
       locations = locations.filter(loc => loc.allowDelivery === args.allowDelivery);
     }
     
+    // Get user's favorites if filtering by favorites only
+    let favoriteItemIds = new Set<string>();
+    if (args.favoritesOnly) {
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity) {
+        const favorites = await ctx.db
+          .query("favorites")
+          .filter((q) => q.eq(q.field("userId"), identity.subject))
+          .collect();
+        favoriteItemIds = new Set(favorites.map(f => f.itemId));
+      }
+    }
+
     // Get items for each location
     const locationsWithItems = await Promise.all(
       locations.map(async (location) => {
-        const items = await ctx.db
+        let items = await ctx.db
           .query("locationItems")
           .withIndex("by_location_id", (q) => q.eq("locationId", location._id))
           .collect();
+        
+        // Apply favorites filter first if needed
+        if (args.favoritesOnly) {
+          items = items.filter(item => favoriteItemIds.has(item._id));
+        }
         
         // Get hours for this location
         const hours = await ctx.db
@@ -77,8 +96,8 @@ export const getLocations = query({
         const averageRating = itemCount > 0 ? totalRating / itemCount : 0;
         const reviewCount = totalReviews;
         
-        // Apply filters to items
-        let filteredItems = items;
+        // Apply additional filters to the already filtered items
+        let filteredItems = items; // items already has favorites filter applied if needed
         
         if (args.glutenFree) {
           filteredItems = filteredItems.filter(item => item.glutenFree);
@@ -100,8 +119,8 @@ export const getLocations = query({
           return null;
         }
         
-        // If filtering by type or glutenFree and no items match, exclude this location
-        if ((args.type || args.glutenFree) && filteredItems.length === 0) {
+        // If filtering by type, glutenFree, or favorites and no items match, exclude this location
+        if ((args.type || args.glutenFree || args.favoritesOnly) && filteredItems.length === 0) {
           return null;
         }
         
