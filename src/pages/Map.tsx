@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { Filter, Search, X } from 'lucide-react';
+import { Filter, Search, X, Locate } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
 import RestaurantInfo from '../components/RestaurantInfo';
@@ -46,8 +46,23 @@ const immediateMarkerIcon = new L.Icon({
   className: 'immediate-marker' // Add CSS class for potential styling
 });
 
+// User location marker - distinctive blue dot
+const userLocationIcon = new L.DivIcon({
+  html: `<div style="
+    width: 16px;
+    height: 16px;
+    background: #3B82F6;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0,0,0,0.2);
+  "></div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  className: 'user-location-marker'
+});
+
 // Map controller component for handling map interactions
-function MapController({ selectedLocation }: { selectedLocation: LocationWithItems | null }) {
+function MapController({ selectedLocation, userLocation }: { selectedLocation: LocationWithItems | null; userLocation: [number, number] | null }) {
   const map = useMap();
 
   useEffect(() => {
@@ -58,6 +73,15 @@ function MapController({ selectedLocation }: { selectedLocation: LocationWithIte
       });
     }
   }, [selectedLocation, map]);
+
+  useEffect(() => {
+    if (userLocation) {
+      map.setView(userLocation, 15, {
+        animate: true,
+        duration: 1
+      });
+    }
+  }, [userLocation, map]);
 
   return null;
 }
@@ -76,10 +100,51 @@ export default function Map() {
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const selectedLocationRef = useRef(selectedLocation);
   
   // Keep ref in sync with state
   selectedLocationRef.current = selectedLocation;
+
+  // Handle geolocation
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation([latitude, longitude]);
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        setIsLocating(false);
+        let message = 'Unable to get your location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'Location access denied. Please enable location permissions.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information unavailable.';
+            break;
+          case error.TIMEOUT:
+            message = 'Location request timed out.';
+            break;
+        }
+        alert(message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
 
   // Listen for mobile filter button clicks from Navigation
@@ -405,14 +470,14 @@ export default function Map() {
       </div>
 
       {/* Map */}
-      <div className="flex-1 relative w-full">
+      <div className="flex-1 relative w-full">        
         <MapContainer
           center={[45.5152, -122.6784]} // Portland coordinates
           zoom={12}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
         >
-          <MapController selectedLocation={selectedLocation} />
+          <MapController selectedLocation={selectedLocation} userLocation={userLocation} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -487,7 +552,30 @@ export default function Map() {
               }}
             />
           ))}
+          
+          {/* User Location Marker */}
+          {userLocation && (
+            <Marker
+              position={userLocation}
+              icon={userLocationIcon}
+              zIndexOffset={1000} // Ensure it appears above other markers
+            />
+          )}
         </MapContainer>
+
+        {/* Locate Me Button */}
+        <button
+          onClick={handleLocateMe}
+          disabled={isLocating}
+          className={`absolute bottom-28 right-4 md:bottom-4 z-40 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors border border-gray-200 ${
+            isLocating ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          aria-label="Locate me"
+        >
+          <Locate className={`w-5 h-5 text-gray-700 ${
+            isLocating ? 'animate-spin' : ''
+          }`} />
+        </button>
 
         {/* Location Details Overlay */}
         {selectedLocation && (
