@@ -146,3 +146,51 @@ export const getItemRatings = query({
     }));
   },
 });
+
+// OPTIMIZED: Get ratings for multiple items at once
+export const getBatchItemRatings = query({
+  args: {
+    itemIds: v.array(v.id("locationItems"))
+  },
+  handler: async (ctx, args) => {
+    const ratings = await ctx.db.query("itemRatings").collect();
+    
+    // Group ratings by itemId
+    const ratingsByItem = new Map<string, typeof ratings>();
+    ratings.forEach(rating => {
+      if (args.itemIds.includes(rating.itemId)) {
+        if (!ratingsByItem.has(rating.itemId)) {
+          ratingsByItem.set(rating.itemId, []);
+        }
+        ratingsByItem.get(rating.itemId)!.push(rating);
+      }
+    });
+    
+    // Calculate stats for each item
+    const result = new Map<string, {
+      averageRating: number;
+      ratingCount: number;
+      userRating?: number;
+    }>();
+    
+    const identity = await ctx.auth.getUserIdentity();
+    const userId = identity?.subject;
+    
+    args.itemIds.forEach(itemId => {
+      const itemRatings = ratingsByItem.get(itemId) || [];
+      const userRating = userId ? itemRatings.find(r => r.userId === userId) : undefined;
+      
+      const averageRating = itemRatings.length > 0 
+        ? itemRatings.reduce((sum, r) => sum + r.rating, 0) / itemRatings.length 
+        : 0;
+      
+      result.set(itemId, {
+        averageRating: Math.round(averageRating * 10) / 10,
+        ratingCount: itemRatings.length,
+        userRating: userRating?.rating
+      });
+    });
+    
+    return Object.fromEntries(result);
+  },
+});

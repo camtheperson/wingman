@@ -94,8 +94,8 @@ export default function Map() {
 
 
 
-  // Process JSON data to create immediate pins with filtering
-  const immediatePins: JsonLocationPin[] = useMemo(() => {
+  // Process JSON data to create fallback pins with filtering
+  const fallbackPins: JsonLocationPin[] = useMemo(() => {
     // Type the imported JSON data
     interface JsonItem {
       restaurantName: string;
@@ -214,6 +214,17 @@ export default function Map() {
     return pins;
   }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
 
+  // Use lightweight pins query for map markers only
+  const optimizedPins = useQuery(api.locations.getLocationPins, {
+    searchTerm: searchTerm || undefined,
+    neighborhood: selectedNeighborhood || undefined,
+    glutenFree: glutenFree || undefined,
+    allowMinors: allowMinors || undefined,
+    allowTakeout: allowTakeout || undefined,
+    allowDelivery: allowDelivery || undefined,
+    type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
+  });
+
   const locations = useQuery(api.locations.getLocations, {
     searchTerm: searchTerm || undefined,
     neighborhood: selectedNeighborhood || undefined,
@@ -224,12 +235,29 @@ export default function Map() {
     isOpenNow: isOpenNow || undefined,
     type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
     favoritesOnly: favoritesOnly || undefined,
+    limit: 100, // Increase limit to ensure we get all locations
+    offset: 0,
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
 
   // Get favorited items for the current user
   const favoriteItems = useQuery(api.favorites.getFavorites, {});
+
+  // Use optimized pins when available, fallback to JSON processing
+  const finalPins: JsonLocationPin[] = useMemo(() => {
+    if (optimizedPins && optimizedPins.length > 0) {
+      return optimizedPins.map(pin => ({
+        _id: pin._id,
+        restaurantName: pin.restaurantName,
+        neighborhood: pin.neighborhood,
+        latitude: pin.latitude!,
+        longitude: pin.longitude!,
+        address: pin.address,
+      }));
+    }
+    return fallbackPins;
+  }, [optimizedPins, fallbackPins]);
 
   // Clear favorites filter when user logs out (favoriteItems becomes null/empty)
   useEffect(() => {
@@ -268,13 +296,33 @@ export default function Map() {
       if (location && (!currentSelected || currentSelected._id !== locationId)) {
         setSelectedLocation(location);
       }
+      // Handle temp location upgrade: if current selection is a temp location,
+      // try to find the matching real location by restaurant name and coordinates
+      else if (currentSelected && currentSelected._id.startsWith('temp-') && !location) {
+        const matchingLocation = locations.find(loc => 
+          loc && 
+          loc.restaurantName === currentSelected.restaurantName &&
+          loc.latitude && loc.longitude &&
+          Math.abs(loc.latitude - currentSelected.latitude!) < 0.001 && 
+          Math.abs(loc.longitude - currentSelected.longitude!) < 0.001
+        );
+        
+        if (matchingLocation) {
+          // Upgrade temp location to real location
+          setSelectedLocation(matchingLocation);
+          // Update URL with real location ID
+          const newSearchParams = new URLSearchParams(searchParams);
+          newSearchParams.set('location', matchingLocation._id);
+          setSearchParams(newSearchParams);
+        }
+      }
     } else if (!locationId) {
       // URL has no location ID - clear selection if we have one
       if (currentSelected) {
         setSelectedLocation(null);
       }
     }
-  }, [searchParams, locations]); // Now we can exclude selectedLocation from deps
+  }, [searchParams, locations, setSearchParams]); // Now we can exclude selectedLocation from deps
 
   // Check if a location has any favorited items
   const locationHasFavorites = (location: LocationWithItems): boolean => {
@@ -374,7 +422,7 @@ export default function Map() {
             These show up immediately while detailed data loads from Convex.
             They are slightly smaller and faded to indicate they're temporary.
           */}
-          {immediatePins.map((pin, index) => {
+          {finalPins.map((pin, index) => {
             // Check if this pin has detailed data loaded from Convex
             // Use a more precise coordinate match to avoid duplicate pins
             const detailedLocation = filteredLocations.find(loc => 

@@ -103,3 +103,27 @@ export const getFavoritedItems = query({
     return favoritedItems;
   },
 });
+
+// OPTIMIZED: Get user's favorites in batch
+export const getBatchFavorites = query({
+  args: {
+    itemIds: v.array(v.id("locationItems"))
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return {};
+    }
+    
+    const favorites = await ctx.db
+      .query("favorites")
+      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .collect();
+    
+    const favoriteSet = new Set(favorites.map(f => f.itemId));
+    
+    return Object.fromEntries(
+      args.itemIds.map(itemId => [itemId, favoriteSet.has(itemId)])
+    );
+  },
+});
