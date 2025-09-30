@@ -11,6 +11,7 @@ interface LocationItem {
   _id: Id<"locationItems">;
   itemName: string;
   description?: string;
+  altDescription?: string;
   type: 'meat' | 'vegetarian' | 'vegan';
   glutenFree: boolean;
   image?: string;
@@ -67,8 +68,19 @@ export default function ItemCard({ item, compact = false }: ItemCardProps) {
         )}
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-wingman-orange mb-2 leading-tight">{item.itemName}</h4>
+          
           {item.description && (
-            <p className="text-sm text-gray-600 mb-3 leading-relaxed">{item.description}</p>
+            <div className="mb-3">
+              <h5 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">What's on them...</h5>
+              <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+            </div>
+          )}
+          
+          {item.altDescription && (
+            <div className="mb-3">
+              <h5 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">What they're saying...</h5>
+              <p className="text-sm text-gray-600 leading-relaxed">{item.altDescription}</p>
+            </div>
           )}
           
           <div className="flex items-center gap-2 mb-3">

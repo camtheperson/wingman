@@ -5,6 +5,7 @@ export type LocationItem = {
   locationId: Id<'locations'>;
   itemName: string;
   description?: string;
+  altDescription?: string;
   type: 'meat' | 'vegetarian' | 'vegan';
   glutenFree: boolean;
   image?: string;
@@ -34,6 +35,7 @@ export type LocationWithItems = {
   allowMinors: boolean;
   allowTakeout: boolean;
   allowDelivery: boolean;
+  purchaseLimits: boolean;
   phone?: string;
   website?: string;
   items?: LocationItem[];
@@ -54,4 +56,5 @@ export type JsonLocationPin = {
   allowMinors?: boolean;
   allowTakeout?: boolean;
   allowDelivery?: boolean;
+  purchaseLimits?: boolean;
 };

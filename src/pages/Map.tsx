@@ -3,10 +3,12 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { Filter, Search, X, MapPin } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
-import ItemCard from '../components/ItemCard';
+import RestaurantInfo from '../components/RestaurantInfo';
+import RestaurantHours from '../components/RestaurantHours';
+import WingItemDisplay from '../components/WingItemDisplay';
 import type { LocationWithItems, LocationItem, JsonLocationPin } from '../types';
 import itemsData from '../../data/items.json';
 import 'leaflet/dist/leaflet.css';
@@ -99,6 +101,7 @@ export default function Map() {
       allowMinors?: boolean;
       allowTakeout?: boolean;
       allowDelivery?: boolean;
+      purchaseLimits?: boolean;
       hours?: Array<{
         dayOfWeek: string;
         date: string;
@@ -119,6 +122,7 @@ export default function Map() {
       allowMinors?: boolean;
       allowTakeout?: boolean;
       allowDelivery?: boolean;
+      purchaseLimits?: boolean;
       hours?: JsonItem['hours'];
       items: JsonItem[];
     }
@@ -140,6 +144,7 @@ export default function Map() {
             allowMinors: item.allowMinors,
             allowTakeout: item.allowTakeout,
             allowDelivery: item.allowDelivery,
+            purchaseLimits: item.purchaseLimits,
             hours: item.hours,
             items: []
           };
@@ -396,43 +401,99 @@ export default function Map() {
 
         {/* Location Details Overlay */}
         {selectedLocation && (
-          <div className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-[70vh] md:max-h-80 overflow-y-auto">
-            <div className="p-3 md:p-4">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1 pr-2">
-                  <h3 className="text-xl md:text-lg font-semibold text-gray-900 leading-tight">
-                    {selectedLocation.restaurantName}
-                  </h3>
-                  <div className="flex items-center text-base md:text-sm text-gray-600 mt-2">
-                    <MapPin className="w-5 h-5 md:w-4 md:h-4 mr-1 flex-shrink-0" />
-                    <span className="break-words">{selectedLocation.neighborhood}</span>
-                  </div>
-                  <p className="text-sm md:text-xs text-gray-500 mt-1 break-words">{selectedLocation.address}</p>
-                </div>
+          <>
+            {/* Mobile: Full screen overlay */}
+            <div className="md:hidden fixed inset-0 bg-white z-20 flex flex-col" style={{ top: '4rem' }}>
+              {/* Mobile Header */}
+              <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
+                <h3 className="text-xl font-semibold text-gray-900 truncate">
+                  {selectedLocation.restaurantName}
+                </h3>
                 <button
                   onClick={() => setSelectedLocation(null)}
                   className="text-gray-400 hover:text-gray-600 p-2 flex-shrink-0"
                 >
-                  <X className="w-6 h-6 md:w-5 md:h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
               
-              {/* Show loading state for temporary locations */}
-              {selectedLocation._id.startsWith('temp-') && (
-                <div className="mt-4 text-center text-gray-500">
-                  <p>Loading detailed information...</p>
-                </div>
-              )}
-              
-              {selectedLocation.items && selectedLocation.items.length > 0 && (
-                <div className="space-y-4 mt-4">
-                  {selectedLocation.items.map((item: LocationItem) => (
-                    <ItemCard key={item._id} item={item} compact={true} />
-                  ))}
-                </div>
-              )}
+              {/* Mobile Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Restaurant Info */}
+                <RestaurantInfo location={selectedLocation} />
+                
+                {/* Show loading state for temporary locations */}
+                {selectedLocation._id.startsWith('temp-') && (
+                  <div className="p-8 text-center text-gray-500">
+                    <p>Loading detailed information...</p>
+                  </div>
+                )}
+                
+                {/* Items with large images on mobile */}
+                {selectedLocation.items && selectedLocation.items.length > 0 && (
+                  <div className="space-y-0">
+                    {selectedLocation.items.map((item: LocationItem) => (
+                      <WingItemDisplay 
+                        key={item._id} 
+                        item={item} 
+                        imageSize="large"
+                        showFullDetails={true}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Hours */}
+                <RestaurantHours hours={selectedLocation.hours} />
+              </div>
             </div>
-          </div>
+            
+            {/* Desktop: Larger overlay with mobile-like structure */}
+            <div className="hidden md:block absolute inset-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10 flex flex-col">
+              {/* Desktop Header */}
+              <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white rounded-t-lg">
+                <h3 className="text-xl font-semibold text-gray-900 truncate">
+                  {selectedLocation.restaurantName}
+                </h3>
+                <button
+                  onClick={() => setSelectedLocation(null)}
+                  className="text-gray-400 hover:text-gray-600 p-2 flex-shrink-0"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              {/* Desktop Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Restaurant Info */}
+                <RestaurantInfo location={selectedLocation} />
+                
+                {/* Show loading state for temporary locations */}
+                {selectedLocation._id.startsWith('temp-') && (
+                  <div className="p-8 text-center text-gray-500">
+                    <p>Loading detailed information...</p>
+                  </div>
+                )}
+                
+                {/* Items with medium-sized images on desktop */}
+                {selectedLocation.items && selectedLocation.items.length > 0 && (
+                  <div className="space-y-0">
+                    {selectedLocation.items.map((item: LocationItem) => (
+                      <WingItemDisplay 
+                        key={item._id} 
+                        item={item} 
+                        imageSize="medium"
+                        showFullDetails={true}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Hours */}
+                <RestaurantHours hours={selectedLocation.hours} />
+              </div>
+            </div>
+          </>
         )}
         
         {/* Mobile Filters Modal */}
