@@ -493,7 +493,7 @@ export default function Map() {
         {selectedLocation && (
           <>
             {/* Mobile: Full screen overlay */}
-            <div className="md:hidden fixed inset-0 bg-white z-20 flex flex-col" style={{ top: '4rem' }}>
+            <div className="md:hidden fixed inset-0 bg-white z-20 flex flex-col mobile-footer-padding" style={{ top: '4rem' }}>
               {/* Mobile Header */}
               <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
                 <h3 className="text-xl font-semibold text-gray-900 truncate">
@@ -588,7 +588,7 @@ export default function Map() {
         
         {/* Mobile Filters Modal */}
         {showMobileFilters && (
-          <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+          <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
             <div className="bg-white w-full max-h-[80vh] rounded-t-xl overflow-hidden">
               <div className="p-4 border-b">
                 <div className="flex items-center justify-between">

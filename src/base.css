@@ -177,6 +177,13 @@ button:focus-visible {
   }
 }
 
+/* Mobile Footer Padding - Only applies on mobile for Map and List pages */
+@media (max-width: 767px) {
+  .mobile-footer-padding {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Specific fix for Safari on iOS */
 @media screen and (-webkit-min-device-pixel-ratio: 2) {
   /* Ensure proper viewport handling */

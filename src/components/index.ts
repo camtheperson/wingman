@@ -8,3 +8,5 @@ export { default as ItemRatingControlsWrapper } from './ItemRatingControlsWrappe
 export { default as StarRating } from './StarRating';
 export { default as RatingDisplay } from './RatingDisplay';
 export { default as WelcomeModal } from './WelcomeModal';
+export { default as MobileFooter } from './MobileFooter';
+export { default as LocationDetailsModal } from './LocationDetailsModal';

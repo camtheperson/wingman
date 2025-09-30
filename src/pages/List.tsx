@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Search, Filter } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
+import LocationDetailsModal from '../components/LocationDetailsModal';
+import type { LocationWithItems } from '../types';
 
 export default function List() {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
   const [glutenFree, setGlutenFree] = useState(false);
@@ -19,6 +19,7 @@ export default function List() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'neighborhood'>('name');
+  const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
 
   const locations = useQuery(api.locations.getLocations, {
     searchTerm: searchTerm || undefined,
@@ -30,7 +31,7 @@ export default function List() {
     isOpenNow: isOpenNow || undefined,
     type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
     favoritesOnly: favoritesOnly || undefined,
-    limit: 20, // Add pagination limit
+    limit: 100, // Increase limit to ensure we get all locations
     offset: 0,
   });
 
@@ -147,10 +148,10 @@ export default function List() {
               key={location._id}
               location={location}
               onClick={() => {
-                // Navigate to map page with location selected
-                navigate(`/?location=${location._id}`);
+                // Show location details in modal
+                setSelectedLocation(location);
               }}
-              isSelected={false}
+              isSelected={selectedLocation?._id === location._id}
             />
           ))}
         </div>
@@ -175,6 +176,12 @@ export default function List() {
           </button>
         </div>
       )}
+
+      {/* Location Details Modal */}
+      <LocationDetailsModal 
+        selectedLocation={selectedLocation}
+        onClose={() => setSelectedLocation(null)}
+      />
     </div>
   );
 }

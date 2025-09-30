@@ -84,20 +84,19 @@ export default function Navigation() {
           <div className="md:hidden flex items-center space-x-2">
             <Link
               to="/donate"
-              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+              className={`flex items-center px-2 py-2 rounded-md text-sm font-medium ${
                 isActive('/donate') 
                   ? 'bg-wingman-pink text-white' 
                   : 'text-gray-600 hover:text-wingman-pink hover:bg-wingman-pink hover:bg-opacity-10'
               }`}
             >
-              <DollarSign className="w-4 h-4 mr-1" />
-              Donate
+              <DollarSign className="w-5 h-5" />
             </Link>
             
             {/* User Authentication */}
             <Unauthenticated>
               <SignInButton>
-                <button className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-wingman-purple hover:bg-wingman-purple hover:bg-opacity-10">
+                <button className="flex items-center px-2 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-wingman-purple hover:bg-wingman-purple hover:bg-opacity-10">
                   <User className="w-5 h-5" />
                 </button>
               </SignInButton>
@@ -109,7 +108,7 @@ export default function Navigation() {
             {isActive('/') && (
               <button
                 onClick={handleMobileFilterClick}
-                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-wingman-purple hover:text-wingman-purple-light"
+                className="flex items-center px-2 py-2 rounded-md text-sm font-medium text-wingman-purple hover:text-wingman-purple-light"
               >
                 <Filter className="w-5 h-5" />
               </button>
