@@ -10,8 +10,9 @@ import Filters from '../components/Filters';
 import RestaurantInfo from '../components/RestaurantInfo';
 import RestaurantHours from '../components/RestaurantHours';
 import WingItemDisplay from '../components/WingItemDisplay';
-import type { LocationWithItems, LocationItem, JsonLocationPin } from '../types';
+import type { LocationWithItems, LocationItem, JsonLocationPin, JsonItem } from '../types';
 import itemsData from '../../data/items.json';
+import { processJsonToLocations, filterJsonLocations, locationsToJsonPins } from '../utils/jsonDataProcessor';
 import 'leaflet/dist/leaflet.css';
 
 
@@ -159,171 +160,55 @@ export default function Map() {
 
 
 
-  // Process JSON data to create fallback pins with filtering
-  const fallbackPins: JsonLocationPin[] = useMemo(() => {
-    // Type the imported JSON data
-    interface JsonItem {
-      restaurantName: string;
-      neighborhood: string;
-      latitude: number;
-      longitude: number;
-      address: string;
-      type?: string;
-      glutenFree?: boolean;
-      allowMinors?: boolean;
-      allowTakeout?: boolean;
-      allowDelivery?: boolean;
-      purchaseLimits?: boolean;
-      hours?: Array<{
-        dayOfWeek: string;
-        date: string;
-        hours: string;
-      }>;
-    }
-    
-    // Note: "Open now" filter is disabled for immediate pins since it requires
-    // complex timezone logic. The detailed pins from Convex handle this properly.
-    
-    // Group items by restaurant to match Convex query logic
-    interface LocationGroup {
-      restaurantName: string;
-      neighborhood: string;
-      latitude: number;
-      longitude: number;
-      address: string;
-      allowMinors?: boolean;
-      allowTakeout?: boolean;
-      allowDelivery?: boolean;
-      purchaseLimits?: boolean;
-      hours?: JsonItem['hours'];
-      items: JsonItem[];
-    }
-    
-    const locationMap: Record<string, LocationGroup> = {};
-    
-    // Group all items by restaurant
-    (itemsData as JsonItem[]).forEach((item) => {
-      if (item.latitude && item.longitude && item.restaurantName) {
-        const key = item.restaurantName;
-        
-        if (!locationMap[key]) {
-          locationMap[key] = {
-            restaurantName: item.restaurantName,
-            neighborhood: item.neighborhood,
-            latitude: item.latitude,
-            longitude: item.longitude,
-            address: item.address,
-            allowMinors: item.allowMinors,
-            allowTakeout: item.allowTakeout,
-            allowDelivery: item.allowDelivery,
-            purchaseLimits: item.purchaseLimits,
-            hours: item.hours,
-            items: []
-          };
-        }
-        
-        locationMap[key].items.push(item);
-      }
-    });
-    
-    const pins: JsonLocationPin[] = [];
-    
-    // Apply filters following the same logic as Convex query
-    Object.values(locationMap).forEach((location: LocationGroup) => {
-      // Apply location-level filters
-      const matchesSearch = !searchTerm || 
-        location.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        location.neighborhood.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesNeighborhood = !selectedNeighborhood || location.neighborhood === selectedNeighborhood;
-      
-      const matchesAllowMinors = !allowMinors || location.allowMinors === true;
-      
-      const matchesAllowTakeout = !allowTakeout || location.allowTakeout === true;
-      
-      const matchesAllowDelivery = !allowDelivery || location.allowDelivery === true;
-      
-      // Note: isOpenNow and favoritesOnly filters are handled by Convex backend
-      
-      if (!matchesSearch || !matchesNeighborhood || !matchesAllowMinors || 
-          !matchesAllowTakeout || !matchesAllowDelivery) {
-        return;
-      }
-      
-      // Apply item-level filters
-      let hasMatchingItems = true;
-      if (glutenFree || selectedType) {
-        const matchingItems = location.items.filter((item: JsonItem) => {
-          const itemMatchesGlutenFree = !glutenFree || item.glutenFree === true;
-          const itemMatchesType = !selectedType || item.type === selectedType;
-          return itemMatchesGlutenFree && itemMatchesType;
-        });
-        
-        hasMatchingItems = matchingItems.length > 0;
-      }
-      
-      if (hasMatchingItems) {
-        pins.push({
-          restaurantName: location.restaurantName,
-          neighborhood: location.neighborhood,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          address: location.address
-        });
-      }
-    });
-    
-    return pins;
-  }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, selectedType]);
+
 
   // Use lightweight pins query for map markers only
-  const optimizedPins = useQuery(api.locations.getLocationPins, {
-    searchTerm: searchTerm || undefined,
-    neighborhood: selectedNeighborhood || undefined,
-    glutenFree: glutenFree || undefined,
-    allowMinors: allowMinors || undefined,
-    allowTakeout: allowTakeout || undefined,
-    allowDelivery: allowDelivery || undefined,
-    isOpenNow: isOpenNow || undefined,
-    type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
-    favoritesOnly: favoritesOnly || undefined,
+  // Get neighborhoods directly from JSON data
+  const neighborhoods = useMemo(() => {
+    const allNeighborhoods = (itemsData as JsonItem[]).map(item => item.neighborhood);
+    return [...new Set(allNeighborhoods)].sort();
+  }, []);
+
+  // Get all unique item keys for enrichment data query
+  const itemKeys = useMemo(() => {
+    return [...new Set((itemsData as JsonItem[]).map(item => item.itemKey))];
+  }, []);
+
+  // Get enrichment data (ratings/favorites) for all items
+  const enrichmentData = useQuery(api.locations.getItemEnrichmentData, {
+    itemKeys
   });
 
-  const locations = useQuery(api.locations.getLocations, {
-    searchTerm: searchTerm || undefined,
-    neighborhood: selectedNeighborhood || undefined,
-    glutenFree: glutenFree || undefined,
-    allowMinors: allowMinors || undefined,
-    allowTakeout: allowTakeout || undefined,
-    allowDelivery: allowDelivery || undefined,
-    isOpenNow: isOpenNow || undefined,
-    type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
-    favoritesOnly: favoritesOnly || undefined,
-    limit: 100, // Increase limit to ensure we get all locations
-    offset: 0,
-  });
-
-  const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
-
-  // Get favorited items for the current user
+  // Get favorited items for the current user (still need this for favorites filter)
   const favoriteItems = useQuery(api.favorites.getFavorites, {});
 
-  // Use optimized pins when available, fallback to JSON processing
+  // Process JSON data into locations with enrichment data
+  const locations: LocationWithItems[] = useMemo(() => {
+    if (!enrichmentData) return [];
+    
+    // Convert JSON items to location structure
+    const allLocations = processJsonToLocations(itemsData as JsonItem[], enrichmentData);
+    
+    // Apply filters
+    const favoriteItemIds = new Set(favoriteItems?.map(fav => fav.itemId) || []);
+    
+    return filterJsonLocations(allLocations, {
+      searchTerm: searchTerm || undefined,
+      neighborhood: selectedNeighborhood || undefined,
+      glutenFree: glutenFree || undefined,
+      allowMinors: allowMinors || undefined,
+      allowTakeout: allowTakeout || undefined,
+      allowDelivery: allowDelivery || undefined,
+      isOpenNow: isOpenNow || undefined,
+      type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
+      favoritesOnly: favoritesOnly || undefined,
+    }, favoriteItemIds);
+  }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
+
+  // Convert locations to pins for map display
   const finalPins: JsonLocationPin[] = useMemo(() => {
-    // Use optimizedPins if the query has completed (even if it returns empty array)
-    // Only fallback to JSON processing if optimizedPins is undefined (query not completed)
-    if (optimizedPins !== undefined) {
-      return optimizedPins.map(pin => ({
-        _id: pin._id,
-        restaurantName: pin.restaurantName,
-        neighborhood: pin.neighborhood,
-        latitude: pin.latitude!,
-        longitude: pin.longitude!,
-        address: pin.address,
-      }));
-    }
-    return fallbackPins;
-  }, [optimizedPins, fallbackPins]);
+    return locationsToJsonPins(locations);
+  }, [locations]);
 
   // Clear favorites filter when user logs out (favoriteItems becomes null/empty)
   useEffect(() => {
@@ -398,11 +283,13 @@ export default function Map() {
     return location.items.some(item => favoriteItemIds.has(item._id));
   };
 
-  const filteredLocations = locations?.filter((location) => 
-    location != null && location.latitude != null && location.longitude != null
-  ) || [];
-  
-
+  const filteredLocations = locations.filter((location) =>
+    location &&
+    location.latitude !== undefined &&
+    location.longitude !== undefined &&
+    location.restaurantName &&
+    location.neighborhood
+  );
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">

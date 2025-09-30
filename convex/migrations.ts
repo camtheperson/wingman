@@ -252,3 +252,60 @@ export const migrateTypesOnly = mutation({
     };
   },
 });
+
+// Populate itemKey field for existing items
+export const populateItemKeys = mutation({
+  args: {
+    items: v.array(v.object({
+      restaurantName: v.string(),
+      itemName: v.string(),
+      address: v.string(),
+      itemKey: v.string()
+    }))
+  },
+  handler: async (ctx, { items }) => {
+    let updatedCount = 0;
+    let notFoundCount = 0;
+    
+    for (const item of items) {
+      // Find the location by restaurant name
+      const location = await ctx.db
+        .query("locations")
+        .filter((q) => q.eq(q.field("restaurantName"), item.restaurantName))
+        .first();
+      
+      if (!location) {
+        notFoundCount++;
+        continue;
+      }
+      
+      // Find the locationItem by locationId and itemName
+      const locationItem = await ctx.db
+        .query("locationItems")
+        .filter((q) => 
+          q.and(
+            q.eq(q.field("locationId"), location._id),
+            q.eq(q.field("itemName"), item.itemName)
+          )
+        )
+        .first();
+      
+      if (locationItem) {
+        await ctx.db.patch(locationItem._id, {
+          itemKey: item.itemKey,
+          updatedAt: Date.now()
+        });
+        updatedCount++;
+      } else {
+        notFoundCount++;
+      }
+    }
+    
+    return { 
+      success: true, 
+      updated: updatedCount,
+      notFound: notFoundCount,
+      total: items.length
+    };
+  },
+});

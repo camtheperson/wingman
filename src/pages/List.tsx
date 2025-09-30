@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Search, Filter } from 'lucide-react';
 import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
 import LocationDetailsModal from '../components/LocationDetailsModal';
-import type { LocationWithItems } from '../types';
+import type { LocationWithItems, JsonItem } from '../types';
+import itemsData from '../../data/items.json';
+import { processJsonToLocations, filterJsonLocations } from '../utils/jsonDataProcessor';
 
 export default function List() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,22 +23,46 @@ export default function List() {
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'neighborhood'>('name');
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
 
-  const locations = useQuery(api.locations.getLocations, {
-    searchTerm: searchTerm || undefined,
-    neighborhood: selectedNeighborhood || undefined,
-    glutenFree: glutenFree || undefined,
-    allowMinors: allowMinors || undefined,
-    allowTakeout: allowTakeout || undefined,
-    allowDelivery: allowDelivery || undefined,
-    isOpenNow: isOpenNow || undefined,
-    type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
-    favoritesOnly: favoritesOnly || undefined,
-    limit: 100, // Increase limit to ensure we get all locations
-    offset: 0,
+  // Get neighborhoods directly from JSON data
+  const neighborhoods = useMemo(() => {
+    const allNeighborhoods = (itemsData as JsonItem[]).map(item => item.neighborhood);
+    return [...new Set(allNeighborhoods)].sort();
+  }, []);
+
+  // Get all unique item keys for enrichment data query
+  const itemKeys = useMemo(() => {
+    return [...new Set((itemsData as JsonItem[]).map(item => item.itemKey))];
+  }, []);
+
+  // Get enrichment data (ratings/favorites) for all items
+  const enrichmentData = useQuery(api.locations.getItemEnrichmentData, {
+    itemKeys
   });
 
-  const neighborhoods = useQuery(api.locations.getNeighborhoods, {});
   const favoriteItems = useQuery(api.favorites.getFavorites, {});
+
+  // Process JSON data into locations with enrichment data
+  const locations = useMemo(() => {
+    if (!enrichmentData) return [];
+    
+    // Convert JSON items to location structure
+    const allLocations = processJsonToLocations(itemsData as JsonItem[], enrichmentData);
+    
+    // Apply filters
+    const favoriteItemIds = new Set(favoriteItems?.map(fav => fav.itemId) || []);
+    
+    return filterJsonLocations(allLocations, {
+      searchTerm: searchTerm || undefined,
+      neighborhood: selectedNeighborhood || undefined,
+      glutenFree: glutenFree || undefined,
+      allowMinors: allowMinors || undefined,
+      allowTakeout: allowTakeout || undefined,
+      allowDelivery: allowDelivery || undefined,
+      isOpenNow: isOpenNow || undefined,
+      type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
+      favoritesOnly: favoritesOnly || undefined,
+    }, favoriteItemIds);
+  }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
 
   // Clear favorites filter when user logs out
   useEffect(() => {

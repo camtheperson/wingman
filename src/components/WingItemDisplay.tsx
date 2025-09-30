@@ -82,15 +82,26 @@ export default function WingItemDisplay({
         )}
         
         {/* Dietary Tags */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {item.glutenFree && (
             <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
               Gluten Free
             </span>
           )}
-          <span className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-full capitalize font-medium">
-            {item.type}
-          </span>
+          {/* Show all type tags */}
+          {item.types && item.types.length > 1 ? (
+            // Multiple types - show all as separate tags
+            item.types.map((type) => (
+              <span key={type} className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-full capitalize font-medium">
+                {type}
+              </span>
+            ))
+          ) : (
+            // Single type - show primary type
+            <span className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-full capitalize font-medium">
+              {item.type}
+            </span>
+          )}
         </div>
       </div>
     </div>

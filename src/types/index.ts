@@ -7,8 +7,10 @@ export type LocationItem = {
   description?: string;
   altDescription?: string;
   type: 'meat' | 'vegetarian' | 'vegan';
+  types?: ('meat' | 'vegetarian' | 'vegan')[]; // Multiple types for JSON-based items
   glutenFree: boolean;
   image?: string;
+  itemKey?: string;
   averageRating?: number;
   ratingCount?: number;
   ratings?: Array<{ _id: Id<'itemRatings'>; [key: string]: unknown }>;
@@ -58,4 +60,42 @@ export type JsonLocationPin = {
   allowTakeout?: boolean;
   allowDelivery?: boolean;
   purchaseLimits?: boolean;
+};
+
+// JSON item data structure
+export type JsonItem = {
+  restaurantName: string;
+  neighborhood: string;
+  itemName: string;
+  url?: string;
+  description?: string;
+  altDescription?: string;
+  type: string; // Can be comma-separated like "meat, vegetarian"
+  glutenFree: boolean;
+  allowMinors: boolean;
+  allowTakeout: boolean;
+  purchaseLimits: boolean;
+  allowDelivery: boolean;
+  address: string;
+  hours?: Array<{
+    dayOfWeek: string;
+    date: string;
+    hours: string;
+    fullDate: string;
+  }>;
+  latitude?: number;
+  longitude?: number;
+  geocoded_address?: string;
+  geocoding_method?: string;
+  image?: string;
+  imageUrl?: string;
+  itemKey: string;
+};
+
+// Item enrichment data from database
+export type ItemEnrichmentData = {
+  itemId: string;
+  averageRating?: number;
+  ratingCount: number;
+  isFavorited: boolean;
 };
