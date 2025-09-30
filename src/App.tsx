@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Map, List, ItemDetail, Donate } from './pages';
 import { Navigation, WelcomeModal } from './components';
+import { Unauthenticated } from 'convex/react';
 
 function App() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -35,10 +36,12 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-          <WelcomeModal 
-            isOpen={showWelcomeModal} 
-            onClose={handleCloseWelcome}
-          />
+          <Unauthenticated>
+            <WelcomeModal 
+              isOpen={showWelcomeModal} 
+              onClose={handleCloseWelcome}
+            />
+          </Unauthenticated>
         </div>
       </Router>
   );
