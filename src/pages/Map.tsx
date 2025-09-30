@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -76,6 +76,11 @@ export default function Map() {
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
+  const selectedLocationRef = useRef(selectedLocation);
+  
+  // Keep ref in sync with state
+  selectedLocationRef.current = selectedLocation;
+
 
   // Listen for mobile filter button clicks from Navigation
   useEffect(() => {
@@ -243,31 +248,33 @@ export default function Map() {
 
   // Handle closing the selected location
   const handleLocationClose = () => {
-    setSelectedLocation(null);
-    // Remove location parameter from URL
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.delete('location');
-    setSearchParams(newSearchParams);
+    // Only update the URL - let the useEffect handle clearing the state
+    // This prevents the race condition where state is cleared but URL still has location
+    setSearchParams(params => {
+      const newParams = new URLSearchParams(params);
+      newParams.delete('location');
+      return newParams;
+    });
   };
 
-  // Initialize selected location from URL on component mount
+  // Sync selected location with URL params
   useEffect(() => {
     const locationId = searchParams.get('location');
+    const currentSelected = selectedLocationRef.current;
+    
     if (locationId && locations) {
-      // Only set location if we don't already have one selected
-      if (!selectedLocation) {
-        const location = locations.find(loc => loc && loc._id === locationId);
-        if (location) {
-          setSelectedLocation(location);
-        } else {
-          // Clean up URL if location ID doesn't exist
-          const newSearchParams = new URLSearchParams(searchParams);
-          newSearchParams.delete('location');
-          setSearchParams(newSearchParams, { replace: true });
-        }
+      // URL has a location ID - find and set it if different from current
+      const location = locations.find(loc => loc && loc._id === locationId);
+      if (location && (!currentSelected || currentSelected._id !== locationId)) {
+        setSelectedLocation(location);
+      }
+    } else if (!locationId) {
+      // URL has no location ID - clear selection if we have one
+      if (currentSelected) {
+        setSelectedLocation(null);
       }
     }
-  }, [locations, searchParams, selectedLocation, setSearchParams]);
+  }, [searchParams, locations]); // Now we can exclude selectedLocation from deps
 
   // Check if a location has any favorited items
   const locationHasFavorites = (location: LocationWithItems): boolean => {
