@@ -178,10 +178,7 @@ export default function Map() {
       
       const matchesAllowDelivery = !allowDelivery || location.allowDelivery === true;
       
-      // Skip "open now" and "favorites only" filters for immediate pins - let Convex handle these
-      if (isOpenNow || favoritesOnly) {
-        return; // Don't show immediate pins when these filters are active
-      }
+      // Note: isOpenNow and favoritesOnly filters are handled by Convex backend
       
       if (!matchesSearch || !matchesNeighborhood || !matchesAllowMinors || 
           !matchesAllowTakeout || !matchesAllowDelivery) {
@@ -212,7 +209,7 @@ export default function Map() {
     });
     
     return pins;
-  }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
+  }, [searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, selectedType]);
 
   // Use lightweight pins query for map markers only
   const optimizedPins = useQuery(api.locations.getLocationPins, {
@@ -222,7 +219,9 @@ export default function Map() {
     allowMinors: allowMinors || undefined,
     allowTakeout: allowTakeout || undefined,
     allowDelivery: allowDelivery || undefined,
+    isOpenNow: isOpenNow || undefined,
     type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
+    favoritesOnly: favoritesOnly || undefined,
   });
 
   const locations = useQuery(api.locations.getLocations, {
@@ -246,7 +245,9 @@ export default function Map() {
 
   // Use optimized pins when available, fallback to JSON processing
   const finalPins: JsonLocationPin[] = useMemo(() => {
-    if (optimizedPins && optimizedPins.length > 0) {
+    // Use optimizedPins if the query has completed (even if it returns empty array)
+    // Only fallback to JSON processing if optimizedPins is undefined (query not completed)
+    if (optimizedPins !== undefined) {
       return optimizedPins.map(pin => ({
         _id: pin._id,
         restaurantName: pin.restaurantName,
