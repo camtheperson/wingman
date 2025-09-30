@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Search, Filter } from 'lucide-react';
@@ -6,6 +7,7 @@ import LocationCard from '../components/LocationCard';
 import Filters from '../components/Filters';
 
 export default function List() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
   const [glutenFree, setGlutenFree] = useState(false);
@@ -143,8 +145,8 @@ export default function List() {
               key={location._id}
               location={location}
               onClick={() => {
-                // Navigate to location detail or open modal
-                console.log('Navigate to location:', location._id);
+                // Navigate to map page with location selected
+                navigate(`/?location=${location._id}`);
               }}
               isSelected={false}
             />

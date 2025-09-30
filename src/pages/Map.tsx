@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useQuery } from 'convex/react';
@@ -62,6 +63,7 @@ function MapController({ selectedLocation }: { selectedLocation: LocationWithIte
 }
 
 export default function Map() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
   const [glutenFree, setGlutenFree] = useState(false);
@@ -233,7 +235,39 @@ export default function Map() {
 
   const handleLocationClick = (location: LocationWithItems) => {
     setSelectedLocation(location);
+    // Update URL to include the selected location ID
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('location', location._id);
+    setSearchParams(newSearchParams);
   };
+
+  // Handle closing the selected location
+  const handleLocationClose = () => {
+    setSelectedLocation(null);
+    // Remove location parameter from URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('location');
+    setSearchParams(newSearchParams);
+  };
+
+  // Initialize selected location from URL on component mount
+  useEffect(() => {
+    const locationId = searchParams.get('location');
+    if (locationId && locations) {
+      // Only set location if we don't already have one selected
+      if (!selectedLocation) {
+        const location = locations.find(loc => loc && loc._id === locationId);
+        if (location) {
+          setSelectedLocation(location);
+        } else {
+          // Clean up URL if location ID doesn't exist
+          const newSearchParams = new URLSearchParams(searchParams);
+          newSearchParams.delete('location');
+          setSearchParams(newSearchParams, { replace: true });
+        }
+      }
+    }
+  }, [locations, searchParams, selectedLocation, setSearchParams]);
 
   // Check if a location has any favorited items
   const locationHasFavorites = (location: LocationWithItems): boolean => {
@@ -410,7 +444,7 @@ export default function Map() {
                   {selectedLocation.restaurantName}
                 </h3>
                 <button
-                  onClick={() => setSelectedLocation(null)}
+                  onClick={handleLocationClose}
                   className="text-gray-400 hover:text-gray-600 p-2 flex-shrink-0"
                 >
                   <X className="w-6 h-6" />
@@ -456,7 +490,7 @@ export default function Map() {
                   {selectedLocation.restaurantName}
                 </h3>
                 <button
-                  onClick={() => setSelectedLocation(null)}
+                  onClick={handleLocationClose}
                   className="text-gray-400 hover:text-gray-600 p-2 flex-shrink-0"
                 >
                   <X className="w-6 h-6" />
