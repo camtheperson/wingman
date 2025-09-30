@@ -70,7 +70,26 @@ export function processJsonToLocations(
     }
   });
   
-  return Object.values(locationMap);
+  // Calculate location-level ratings after all items are processed
+  const locationsWithRatings = Object.values(locationMap).map(location => {
+    const items = location.items || [];
+    const itemsWithRatings = items.filter(item => item.averageRating && item.averageRating > 0);
+    
+    if (itemsWithRatings.length > 0) {
+      const totalRating = itemsWithRatings.reduce((sum, item) => sum + (item.averageRating || 0), 0);
+      const totalReviews = itemsWithRatings.reduce((sum, item) => sum + (item.ratingCount || 0), 0);
+      
+      return {
+        ...location,
+        averageRating: totalRating / itemsWithRatings.length,
+        reviewCount: totalReviews
+      };
+    }
+    
+    return location;
+  });
+  
+  return locationsWithRatings;
 }
 
 // Apply filters to JSON-based locations (similar to Convex query logic)
