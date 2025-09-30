@@ -13,6 +13,8 @@ export const getLocations = query({
     isOpenNow: v.optional(v.boolean()),
     type: v.optional(v.union(v.literal("meat"), v.literal("vegetarian"), v.literal("vegan"))),
     favoritesOnly: v.optional(v.boolean()),
+    limit: v.optional(v.number()), // Add pagination
+    offset: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     let locations = await ctx.db.query("locations").collect();
@@ -55,43 +57,69 @@ export const getLocations = query({
       }
     }
 
-    // Get items for each location
-    const locationsWithItems = await Promise.all(
-      locations.map(async (location) => {
-        let items = await ctx.db
-          .query("locationItems")
-          .withIndex("by_location_id", (q) => q.eq("locationId", location._id))
-          .collect();
-        
-        // Apply favorites filter first if needed
-        if (args.favoritesOnly) {
-          items = items.filter(item => favoriteItemIds.has(item._id));
+    // Get ALL items and hours for ALL locations in batch
+    const locationIds = locations.map(l => l._id);
+    const allItems = await ctx.db.query("locationItems").collect();
+    const allHours = await ctx.db.query("locationHours").collect();
+    const allRatings = await ctx.db.query("itemRatings").collect();
+    
+    // Group data by location ID for efficient lookup
+    const itemsByLocation = new Map<string, typeof allItems>();
+    const hoursByLocation = new Map<string, typeof allHours>();
+    const ratingsByItem = new Map<string, typeof allRatings>();
+    
+    allItems.forEach(item => {
+      if (locationIds.includes(item.locationId)) {
+        if (!itemsByLocation.has(item.locationId)) {
+          itemsByLocation.set(item.locationId, []);
         }
-        
-        // Get hours for this location
-        const hours = await ctx.db
-          .query("locationHours")
-          .withIndex("by_location_id", (q) => q.eq("locationId", location._id))
-          .collect();
-        
-        // Calculate average rating and review count for this location's items
-        let totalRating = 0;
-        let itemCount = 0;
-        let totalReviews = 0;
-        
-        for (const item of items) {
-          const ratings = await ctx.db
-            .query("itemRatings")
-            .withIndex("by_item_id", (q) => q.eq("itemId", item._id))
-            .collect();
-          
-          if (ratings.length > 0) {
-            const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
-            totalRating += avgRating;
-            itemCount++;
-            totalReviews += ratings.length;
-          }
+        itemsByLocation.get(item.locationId)!.push(item);
+      }
+    });
+    
+    allHours.forEach(hour => {
+      if (locationIds.includes(hour.locationId)) {
+        if (!hoursByLocation.has(hour.locationId)) {
+          hoursByLocation.set(hour.locationId, []);
         }
+        hoursByLocation.get(hour.locationId)!.push(hour);
+      }
+    });
+    
+    allRatings.forEach(rating => {
+      if (!ratingsByItem.has(rating.itemId)) {
+        ratingsByItem.set(rating.itemId, []);
+      }
+      ratingsByItem.get(rating.itemId)!.push(rating);
+    });
+
+    // Process locations with pre-fetched data
+    const locationsWithItems = locations.map((location) => {
+      let items = itemsByLocation.get(location._id) || [];
+      
+      // Apply favorites filter first if needed
+      if (args.favoritesOnly) {
+        items = items.filter(item => favoriteItemIds.has(item._id));
+      }
+      
+      // Get hours for this location
+      const hours = hoursByLocation.get(location._id) || [];
+      
+      // Calculate average rating and review count using pre-fetched ratings
+      let totalRating = 0;
+      let itemCount = 0;
+      let totalReviews = 0;
+      
+      for (const item of items) {
+        const ratings = ratingsByItem.get(item._id) || [];
+        
+        if (ratings.length > 0) {
+          const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+          totalRating += avgRating;
+          itemCount++;
+          totalReviews += ratings.length;
+        }
+      }
         
         const averageRating = itemCount > 0 ? totalRating / itemCount : 0;
         const reviewCount = totalReviews;
@@ -145,10 +173,17 @@ export const getLocations = query({
           reviewCount,
           isOpenNow,
         };
-      })
-    );
+    });
     
-    return locationsWithItems.filter(Boolean);
+    const filteredLocations = locationsWithItems.filter(Boolean);
+    
+    // Apply pagination if specified
+    if (args.limit !== undefined) {
+      const offset = args.offset || 0;
+      return filteredLocations.slice(offset, offset + args.limit);
+    }
+    
+    return filteredLocations;
   },
 });
 
@@ -169,19 +204,29 @@ export const getLocationById = query({
       .withIndex("by_location_id", (q) => q.eq("locationId", id))
       .collect();
     
-    // Get ratings for each item
-    const itemsWithRatings = await Promise.all(
-      items.map(async (item) => {
-        const ratings = await ctx.db
-          .query("itemRatings")
-          .withIndex("by_item_id", (q) => q.eq("itemId", item._id))
-          .collect();
-        
-        const averageRating = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-          : 0;
-        
-        return {
+    // Get ALL ratings in one query and group by item
+    const allRatings = await ctx.db.query("itemRatings").collect();
+    const ratingsByItem = new Map<string, typeof allRatings>();
+    
+    allRatings.forEach(rating => {
+      const itemIds = items.map(item => item._id);
+      if (itemIds.includes(rating.itemId)) {
+        if (!ratingsByItem.has(rating.itemId)) {
+          ratingsByItem.set(rating.itemId, []);
+        }
+        ratingsByItem.get(rating.itemId)!.push(rating);
+      }
+    });
+    
+    // Process items with pre-fetched ratings
+    const itemsWithRatings = items.map((item) => {
+      const ratings = ratingsByItem.get(item._id) || [];
+      
+      const averageRating = ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+        : 0;
+      
+      return {
           _id: item._id,
           locationId: item.locationId,
           itemName: item.itemName,
@@ -194,8 +239,7 @@ export const getLocationById = query({
           ratingCount: ratings.length,
           ratings,
         };
-      })
-    );
+    });
     
     return {
       _id: location._id,
@@ -361,6 +405,80 @@ export const countItems = query({
   handler: async (ctx) => {
     const items = await ctx.db.query("locationItems").collect();
     return items.length;
+  },
+});
+
+// OPTIMIZED: Lightweight query for map pins (no ratings or detailed items)
+export const getLocationPins = query({
+  args: {
+    neighborhood: v.optional(v.string()),
+    searchTerm: v.optional(v.string()),
+    glutenFree: v.optional(v.boolean()),
+    allowMinors: v.optional(v.boolean()),
+    allowTakeout: v.optional(v.boolean()),
+    allowDelivery: v.optional(v.boolean()),
+    type: v.optional(v.union(v.literal("meat"), v.literal("vegetarian"), v.literal("vegan"))),
+  },
+  handler: async (ctx, args) => {
+    let locations = await ctx.db.query("locations").collect();
+    
+    // Apply location-level filters
+    if (args.neighborhood) {
+      locations = locations.filter(loc => loc.neighborhood === args.neighborhood);
+    }
+    
+    if (args.searchTerm) {
+      const term = args.searchTerm.toLowerCase();
+      locations = locations.filter(loc => 
+        loc.restaurantName.toLowerCase().includes(term) ||
+        loc.neighborhood.toLowerCase().includes(term)
+      );
+    }
+    
+    if (args.allowMinors !== undefined) {
+      locations = locations.filter(loc => loc.allowMinors === args.allowMinors);
+    }
+    
+    if (args.allowTakeout !== undefined) {
+      locations = locations.filter(loc => loc.allowTakeout === args.allowTakeout);
+    }
+    
+    if (args.allowDelivery !== undefined) {
+      locations = locations.filter(loc => loc.allowDelivery === args.allowDelivery);
+    }
+    
+    // Only get items if we need to filter by item properties
+    if (args.glutenFree || args.type) {
+      const allItems = await ctx.db.query("locationItems").collect();
+      const itemsByLocation = new Map<string, typeof allItems>();
+      
+      allItems.forEach(item => {
+        if (!itemsByLocation.has(item.locationId)) {
+          itemsByLocation.set(item.locationId, []);
+        }
+        itemsByLocation.get(item.locationId)!.push(item);
+      });
+      
+      locations = locations.filter(location => {
+        const items = itemsByLocation.get(location._id) || [];
+        return items.some(item => {
+          const matchesGlutenFree = !args.glutenFree || item.glutenFree;
+          const matchesType = !args.type || item.type === args.type;
+          return matchesGlutenFree && matchesType;
+        });
+      });
+    }
+    
+    return locations
+      .filter(loc => loc.latitude && loc.longitude)
+      .map(loc => ({
+        _id: loc._id,
+        restaurantName: loc.restaurantName,
+        neighborhood: loc.neighborhood,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        address: loc.address,
+      }));
   },
 });
 

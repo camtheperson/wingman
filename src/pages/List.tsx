@@ -30,6 +30,8 @@ export default function List() {
     isOpenNow: isOpenNow || undefined,
     type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
     favoritesOnly: favoritesOnly || undefined,
+    limit: 20, // Add pagination limit
+    offset: 0,
   });
 
   const neighborhoods = useQuery(api.locations.getNeighborhoods, {});

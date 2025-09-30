@@ -47,6 +47,7 @@ export type LocationWithItems = {
 
 // JSON data type for immediate pins
 export type JsonLocationPin = {
+  _id?: Id<'locations'>;
   restaurantName: string;
   neighborhood: string;
   latitude: number;

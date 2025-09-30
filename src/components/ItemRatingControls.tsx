@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { Authenticated, Unauthenticated } from 'convex/react';
 import { SignInButton } from '@clerk/clerk-react';
 import { Heart } from 'lucide-react';
@@ -10,15 +10,21 @@ import RatingDisplay from './RatingDisplay';
 interface ItemRatingControlsProps {
   itemId: Id<"locationItems">;
   size?: 'sm' | 'md' | 'lg';
+  userRating?: number | null;
+  isFavorited?: boolean;
+  averageRating?: number;
+  ratingCount?: number;
 }
 
-export default function ItemRatingControls({ itemId, size = 'md' }: ItemRatingControlsProps) {
-  // Queries for authenticated users
-  const userRating = useQuery(api.itemRatings.getUserRating, { itemId });
-  const isFavorited = useQuery(api.favorites.isFavorited, { itemId });
-  const ratingStats = useQuery(api.itemRatings.getItemRatingStats, { itemId });
-
-  // Mutations
+export default function ItemRatingControls({ 
+  itemId, 
+  size = 'md',
+  userRating = null,
+  isFavorited = false,
+  averageRating = 0,
+  ratingCount = 0
+}: ItemRatingControlsProps) {
+  // Mutations only - data comes from props
   const setRating = useMutation(api.itemRatings.setRating);
   const toggleFavorite = useMutation(api.favorites.toggleFavorite);
 
@@ -64,11 +70,11 @@ export default function ItemRatingControls({ itemId, size = 'md' }: ItemRatingCo
   return (
     <div>
       {/* Rating Display */}
-      {ratingStats && ratingStats.ratingCount > 0 && (
+      {ratingCount > 0 && (
         <div className="mb-3">
           <RatingDisplay
-            averageRating={ratingStats.averageRating}
-            ratingCount={ratingStats.ratingCount}
+            averageRating={averageRating}
+            ratingCount={ratingCount}
             size={size === 'lg' ? 'md' : 'sm'}
           />
         </div>

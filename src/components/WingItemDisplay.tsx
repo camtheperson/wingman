@@ -1,4 +1,4 @@
-import ItemRatingControls from './ItemRatingControls';
+import ItemRatingControlsWrapper from './ItemRatingControlsWrapper';
 import type { LocationItem } from '../types';
 
 interface WingItemDisplayProps {
@@ -52,7 +52,7 @@ export default function WingItemDisplay({
         
         {/* Rating and Favorite - Prominent placement */}
         <div className="mb-4">
-          <ItemRatingControls 
+          <ItemRatingControlsWrapper 
             itemId={item._id} 
             size={showFullDetails ? 'lg' : 'md'} 
           />
