@@ -19,6 +19,7 @@ import type * as http from "../http.js";
 import type * as itemRatings from "../itemRatings.js";
 import type * as locations from "../locations.js";
 import type * as migrations from "../migrations.js";
+import type * as utils_timeUtils from "../utils/timeUtils.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   itemRatings: typeof itemRatings;
   locations: typeof locations;
   migrations: typeof migrations;
+  "utils/timeUtils": typeof utils_timeUtils;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

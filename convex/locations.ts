@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { checkIfOpenNow } from "./utils/timeUtils";
 
 // Get all locations with their items and ratings
 export const getLocations = query({
@@ -272,75 +273,7 @@ export const getNeighborhoods = query({
   },
 });
 
-// Helper function to check if location is open now
-function checkIfOpenNow(hours: Array<{
-  dayOfWeek: string;
-  date: string;
-  hours: string;
-  fullDate: string;
-}>): boolean {
-  if (!hours || hours.length === 0) return false;
-  
-  // Get current time in Pacific Time (Portland timezone)
-  // UTC-8 (PST) or UTC-7 (PDT) - since it's September, it's still PDT (UTC-7)
-  const now = new Date();
-  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const pacificOffset = -7; // PDT is UTC-7
-  const pacificTime = new Date(utcTime + (pacificOffset * 3600000));
-  const currentDate = pacificTime.toISOString().split('T')[0]; // YYYY-MM-DD format
-  
-  // Find today's hours
-  const todayHours = hours.find(h => h.fullDate === currentDate);
-  if (!todayHours) return false;
-  
-  // Parse hours string (e.g., "12–10 pm", "11 am–11 pm", "Closed")
-  const hoursStr = todayHours.hours;
-  if (hoursStr.toLowerCase().includes('closed')) return false;
-  
-  try {
-    // Extract start and end times - handle formats like "4–10 pm", "11 am–9 pm", "11:30 am–9 pm"
-    let timeRegex = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)\s*[–-]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i;
-    let match = hoursStr.match(timeRegex);
-    let startHour, startMin, startAmPm, endHour, endMin, endAmPm;
-    
-    if (match) {
-      [, startHour, startMin = '0', startAmPm, endHour, endMin = '0', endAmPm] = match;
-    } else {
-      // Try simplified format like "4–10 pm" or "12–8 pm" where start time inherits am/pm from end time
-      timeRegex = /(\d{1,2})(?::(\d{2}))?\s*[–-]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i;
-      match = hoursStr.match(timeRegex);
-      if (match) {
-        [, startHour, startMin = '0', endHour, endMin = '0', endAmPm] = match;
-        // For simplified format, assume start time is in same period as end time unless it's clearly different
-        startAmPm = endAmPm;
-      } else {
-        return false;
-      }
-    }
-    
-    // Convert to 24-hour format
-    let start24 = parseInt(startHour);
-    let end24 = parseInt(endHour);
-    
-    if (startAmPm.toLowerCase() === 'pm' && start24 !== 12) start24 += 12;
-    if (startAmPm.toLowerCase() === 'am' && start24 === 12) start24 = 0;
-    if (endAmPm.toLowerCase() === 'pm' && end24 !== 12) end24 += 12;
-    if (endAmPm.toLowerCase() === 'am' && end24 === 12) end24 = 0;
-    
-    const startTime = start24 * 60 + parseInt(startMin);
-    const endTime = end24 * 60 + parseInt(endMin);
-    const currentTime = pacificTime.getHours() * 60 + pacificTime.getMinutes();
-    
-    // Handle overnight hours (e.g., 11 PM - 2 AM)
-    if (endTime < startTime) {
-      return currentTime >= startTime || currentTime <= endTime;
-    }
-    
-    return currentTime >= startTime && currentTime <= endTime;
-  } catch {
-    return false;
-  }
-}
+
 
 
 
@@ -417,7 +350,9 @@ export const getLocationPins = query({
     allowMinors: v.optional(v.boolean()),
     allowTakeout: v.optional(v.boolean()),
     allowDelivery: v.optional(v.boolean()),
+    isOpenNow: v.optional(v.boolean()),
     type: v.optional(v.union(v.literal("meat"), v.literal("vegetarian"), v.literal("vegan"))),
+    favoritesOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     let locations = await ctx.db.query("locations").collect();
@@ -447,10 +382,26 @@ export const getLocationPins = query({
       locations = locations.filter(loc => loc.allowDelivery === args.allowDelivery);
     }
     
-    // Only get items if we need to filter by item properties
-    if (args.glutenFree || args.type) {
+    // Get user's favorites if filtering by favorites only
+    let favoriteItemIds = new Set<string>();
+    if (args.favoritesOnly) {
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity) {
+        const favorites = await ctx.db
+          .query("favorites")
+          .filter((q) => q.eq(q.field("userId"), identity.subject))
+          .collect();
+        favoriteItemIds = new Set(favorites.map(f => f.itemId));
+      }
+    }
+    
+    // Get items and hours if we need to filter by item properties, favorites, or open now
+    if (args.glutenFree || args.type || args.favoritesOnly || args.isOpenNow) {
       const allItems = await ctx.db.query("locationItems").collect();
+      const allHours = args.isOpenNow ? await ctx.db.query("locationHours").collect() : [];
+      
       const itemsByLocation = new Map<string, typeof allItems>();
+      const hoursByLocation = new Map<string, typeof allHours>();
       
       allItems.forEach(item => {
         if (!itemsByLocation.has(item.locationId)) {
@@ -459,13 +410,48 @@ export const getLocationPins = query({
         itemsByLocation.get(item.locationId)!.push(item);
       });
       
+      if (args.isOpenNow) {
+        allHours.forEach(hour => {
+          if (!hoursByLocation.has(hour.locationId)) {
+            hoursByLocation.set(hour.locationId, []);
+          }
+          hoursByLocation.get(hour.locationId)!.push(hour);
+        });
+      }
+      
       locations = locations.filter(location => {
         const items = itemsByLocation.get(location._id) || [];
-        return items.some(item => {
-          const matchesGlutenFree = !args.glutenFree || item.glutenFree;
-          const matchesType = !args.type || item.type === args.type;
-          return matchesGlutenFree && matchesType;
-        });
+        
+        // Apply favorites filter
+        let filteredItems = items;
+        if (args.favoritesOnly) {
+          filteredItems = filteredItems.filter(item => favoriteItemIds.has(item._id));
+          if (filteredItems.length === 0) return false;
+        }
+        
+        // Apply item-level filters
+        if (args.glutenFree || args.type) {
+          const hasMatchingItems = filteredItems.some(item => {
+            const matchesGlutenFree = !args.glutenFree || item.glutenFree;
+            const matchesType = !args.type || item.type === args.type;
+            return matchesGlutenFree && matchesType;
+          });
+          if (!hasMatchingItems) return false;
+        }
+        
+        // Apply isOpenNow filter
+        if (args.isOpenNow) {
+          const hours = hoursByLocation.get(location._id) || [];
+          const isOpen = checkIfOpenNow(hours as Array<{
+            dayOfWeek: string;
+            date: string;
+            hours: string;
+            fullDate: string;
+          }>);
+          if (!isOpen) return false;
+        }
+        
+        return true;
       });
     }
     
