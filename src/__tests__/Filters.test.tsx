@@ -34,6 +34,12 @@ describe('Filters Component', () => {
     setSelectedType: vi.fn(),
     favoritesOnly: false,
     setFavoritesOnly: vi.fn(),
+    openAtEnabled: false,
+    setOpenAtEnabled: vi.fn(),
+    openAtDate: '',
+    setOpenAtDate: vi.fn(),
+    openAtTime: '',
+    setOpenAtTime: vi.fn(),
     neighborhoods: ['Downtown', 'Pearl District', 'Hawthorne'],
   };
 
@@ -50,6 +56,7 @@ describe('Filters Component', () => {
 
     expect(screen.getByText('Filters')).toBeInTheDocument();
     expect(screen.getByText('Open Now')).toBeInTheDocument();
+    expect(screen.getByText('Nick\'s unnecessarily complicated Open At filter')).toBeInTheDocument();
     expect(screen.getByText('Gluten Free Options')).toBeInTheDocument();
     expect(screen.getByText('Family Friendly')).toBeInTheDocument();
     expect(screen.getByText('Takeout Available')).toBeInTheDocument();
@@ -69,6 +76,32 @@ describe('Filters Component', () => {
     fireEvent.click(openNowCheckbox);
 
     expect(defaultProps.setIsOpenNow).toHaveBeenCalledWith(true);
+  });
+
+  it('calls setOpenAtEnabled when Nick\'s filter checkbox is clicked', () => {
+    render(
+      <MockProviders>
+        <Filters {...defaultProps} />
+      </MockProviders>
+    );
+
+    const openAtCheckbox = screen.getByLabelText(/Nick's unnecessarily complicated Open At filter/);
+    fireEvent.click(openAtCheckbox);
+
+    expect(defaultProps.setOpenAtEnabled).toHaveBeenCalledWith(true);
+  });
+
+  it('shows date and time inputs when Nick\'s filter is enabled', () => {
+    const propsWithOpenAt = { ...defaultProps, openAtEnabled: true };
+    
+    render(
+      <MockProviders>
+        <Filters {...propsWithOpenAt} />
+      </MockProviders>
+    );
+
+    expect(screen.getByLabelText(/Date/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Time/)).toBeInTheDocument();
   });
 
   it('calls setGlutenFree when Gluten Free checkbox is clicked', () => {

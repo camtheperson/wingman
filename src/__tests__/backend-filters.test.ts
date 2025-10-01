@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { checkIfOpenNow } from '../../convex/utils/timeUtils';
+import { checkIfOpenNow, checkIfOpenAt } from '../../convex/utils/timeUtils';
 
 describe('Backend Filter Logic', () => {
   describe('checkIfOpenNow function', () => {
@@ -132,6 +132,60 @@ describe('Backend Filter Logic', () => {
       vi.setSystemTime(new Date('2025-09-30T22:00:00.000Z'));
       
       expect(checkIfOpenNow(hours)).toBe(false);
+    });
+  });
+
+  describe('checkIfOpenAt function', () => {
+    it('should correctly identify when a restaurant is open at a specific date and time', () => {
+      const hours = [
+        {
+          dayOfWeek: 'Tuesday',
+          date: '2025-09-30',
+          hours: '11 am–10 pm',
+          fullDate: '2025-09-30'
+        }
+      ];
+      
+      expect(checkIfOpenAt(hours, '2025-09-30', '15:00')).toBe(true); // 3 PM
+    });
+
+    it('should correctly identify when a restaurant is closed at a specific date and time', () => {
+      const hours = [
+        {
+          dayOfWeek: 'Tuesday',
+          date: '2025-09-30',
+          hours: '11 am–10 pm',
+          fullDate: '2025-09-30'
+        }
+      ];
+      
+      expect(checkIfOpenAt(hours, '2025-09-30', '23:30')).toBe(false); // 11:30 PM
+    });
+
+    it('should handle overnight hours correctly for specific date and time', () => {
+      const hours = [
+        {
+          dayOfWeek: 'Friday',
+          date: '2025-10-03',
+          hours: '11 pm–2 am',
+          fullDate: '2025-10-03'
+        }
+      ];
+      
+      expect(checkIfOpenAt(hours, '2025-10-04', '01:30')).toBe(true); // 1:30 AM on next day
+    });
+
+    it('should return false when no hours are available for the target date', () => {
+      const hours = [
+        {
+          dayOfWeek: 'Monday',
+          date: '2025-09-29',
+          hours: '11 am–10 pm',
+          fullDate: '2025-09-29'
+        }
+      ];
+      
+      expect(checkIfOpenAt(hours, '2025-09-30', '15:00')).toBe(false);
     });
   });
 });

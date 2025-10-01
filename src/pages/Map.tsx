@@ -98,6 +98,9 @@ export default function Map() {
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [selectedType, setSelectedType] = useState('');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [openAtEnabled, setOpenAtEnabled] = useState(false);
+  const [openAtDate, setOpenAtDate] = useState('');
+  const [openAtTime, setOpenAtTime] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
@@ -200,10 +203,13 @@ export default function Map() {
       allowTakeout: allowTakeout || undefined,
       allowDelivery: allowDelivery || undefined,
       isOpenNow: isOpenNow || undefined,
+      openAtEnabled: openAtEnabled || undefined,
+      openAtDate: openAtDate || undefined,
+      openAtTime: openAtTime || undefined,
       type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
       favoritesOnly: favoritesOnly || undefined,
     }, favoriteItemIds);
-  }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
+  }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, openAtEnabled, openAtDate, openAtTime, selectedType, favoritesOnly]);
 
   // Convert locations to pins for map display
   const finalPins: JsonLocationPin[] = useMemo(() => {
@@ -334,6 +340,12 @@ export default function Map() {
               setSelectedType={setSelectedType}
               favoritesOnly={favoritesOnly}
               setFavoritesOnly={setFavoritesOnly}
+              openAtEnabled={openAtEnabled}
+              setOpenAtEnabled={setOpenAtEnabled}
+              openAtDate={openAtDate}
+              setOpenAtDate={setOpenAtDate}
+              openAtTime={openAtTime}
+              setOpenAtTime={setOpenAtTime}
               neighborhoods={neighborhoods || []}
             />
           )}
@@ -608,6 +620,12 @@ export default function Map() {
                   setSelectedType={setSelectedType}
                   favoritesOnly={favoritesOnly}
                   setFavoritesOnly={setFavoritesOnly}
+                  openAtEnabled={openAtEnabled}
+                  setOpenAtEnabled={setOpenAtEnabled}
+                  openAtDate={openAtDate}
+                  setOpenAtDate={setOpenAtDate}
+                  openAtTime={openAtTime}
+                  setOpenAtTime={setOpenAtTime}
                   neighborhoods={neighborhoods || []}
                 />
                 
