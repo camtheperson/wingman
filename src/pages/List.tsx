@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Search, Filter } from 'lucide-react';
@@ -10,6 +11,7 @@ import itemsData from '../../data/items.json';
 import { processJsonToLocations, filterJsonLocations } from '../utils/jsonDataProcessor';
 
 export default function List() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
   const [glutenFree, setGlutenFree] = useState(false);
@@ -25,6 +27,10 @@ export default function List() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'neighborhood'>('name');
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
+  const selectedLocationRef = useRef(selectedLocation);
+  
+  // Keep ref in sync with state
+  selectedLocationRef.current = selectedLocation;
 
   // Get neighborhoods directly from JSON data
   const neighborhoods = useMemo(() => {
@@ -70,12 +76,60 @@ export default function List() {
     }, favoriteItemIds);
   }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, openAtEnabled, openAtDate, openAtTime, selectedType, favoritesOnly]);
 
+  const handleLocationClick = (location: LocationWithItems) => {
+    setSelectedLocation(location);
+    // Update URL to include the selected location ID
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('location', location._id);
+    setSearchParams(newSearchParams);
+  };
+
+  // Handle closing the selected location
+  const handleLocationClose = () => {
+    // Only update the URL - let the useEffect handle clearing the state
+    // This prevents the race condition where state is cleared but URL still has location
+    setSearchParams(params => {
+      const newParams = new URLSearchParams(params);
+      newParams.delete('location');
+      return newParams;
+    });
+  };
+
+  // Sync selected location with URL params
+  useEffect(() => {
+    const locationId = searchParams.get('location');
+    const currentSelected = selectedLocationRef.current;
+    
+    if (locationId && locations) {
+      // URL has a location ID - find and set it if different from current
+      const location = locations.find(loc => loc && loc._id === locationId);
+      if (location && (!currentSelected || currentSelected._id !== locationId)) {
+        setSelectedLocation(location);
+      }
+    } else if (!locationId) {
+      // URL has no location ID - clear selection if we have one
+      if (currentSelected) {
+        setSelectedLocation(null);
+      }
+    }
+  }, [searchParams, locations, setSearchParams]);
+
   // Clear favorites filter when user logs out
   useEffect(() => {
     if (favoritesOnly && (!favoriteItems || favoriteItems.length === 0)) {
       setFavoritesOnly(false);
     }
   }, [favoriteItems, favoritesOnly, setFavoritesOnly]);
+
+  // Update selectedLocation when locations data changes (e.g., after rating/favorite mutations)
+  useEffect(() => {
+    if (selectedLocation && locations) {
+      const updatedLocation = locations.find(loc => loc._id === selectedLocation._id);
+      if (updatedLocation && updatedLocation !== selectedLocation) {
+        setSelectedLocation(updatedLocation);
+      }
+    }
+  }, [locations]);
 
   // Sort locations based on selected criteria
   const sortedLocations = locations?.filter(location => location != null).sort((a, b) => {
@@ -185,10 +239,7 @@ export default function List() {
             <LocationCard
               key={location._id}
               location={location}
-              onClick={() => {
-                // Show location details in modal
-                setSelectedLocation(location);
-              }}
+              onClick={() => handleLocationClick(location)}
               isSelected={selectedLocation?._id === location._id}
             />
           ))}
@@ -218,7 +269,7 @@ export default function List() {
       {/* Location Details Modal */}
       <LocationDetailsModal 
         selectedLocation={selectedLocation}
-        onClose={() => setSelectedLocation(null)}
+        onClose={handleLocationClose}
       />
     </div>
   );
