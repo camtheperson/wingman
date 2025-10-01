@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import RestaurantInfo from './RestaurantInfo';
 import RestaurantHours from './RestaurantHours';
@@ -10,12 +11,51 @@ interface LocationDetailsModalProps {
 }
 
 export default function LocationDetailsModal({ selectedLocation, onClose }: LocationDetailsModalProps) {
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (selectedLocation) {
+      // Store original body style
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore original body style when modal closes
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [selectedLocation]);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    if (!selectedLocation) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [selectedLocation, onClose]);
+
   if (!selectedLocation) return null;
 
   return (
     <>
       {/* Mobile: Full screen overlay */}
-      <div className="md:hidden fixed inset-0 bg-white z-30 flex flex-col mobile-footer-padding" style={{ top: '4rem' }}>
+      <div 
+        className="md:hidden fixed inset-0 bg-white flex flex-col mobile-footer-padding" 
+        style={{ top: '4rem', zIndex: 1100 }}
+        role="dialog" 
+        aria-modal="true"
+        tabIndex={-1}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+      >
         {/* Mobile Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
           <h3 className="text-xl font-semibold text-gray-900 truncate">
@@ -62,12 +102,18 @@ export default function LocationDetailsModal({ selectedLocation, onClose }: Loca
       
       {/* Desktop: Modal with backdrop */}
       <div 
-        className="hidden md:block fixed inset-0 bg-black bg-opacity-50 z-30 flex items-center justify-center p-4"
+        className="hidden md:block fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+        style={{ zIndex: 1100 }}
         onClick={onClose}
+        role="dialog" 
+        aria-modal="true"
+        onWheel={(e) => e.stopPropagation()}
       >
         <div 
-          className="bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col max-w-4xl w-full max-h-[90vh]"
+          className="bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col max-w-4xl w-full max-h-[90vh] mx-auto"
           onClick={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
+          tabIndex={-1}
         >
         {/* Desktop Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white rounded-t-lg">
