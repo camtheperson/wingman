@@ -89,7 +89,7 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
                 <Search className="w-5 h-5 text-red-500 mt-1 flex-shrink-0" />
                 <div>
                   <h4 className="font-medium text-gray-900">Smart Search</h4>
-                  <p className="text-sm text-gray-600">Find wings by location, flavor, or restaurant name</p>
+                  <p className="text-sm text-gray-600">Find wings by location, wing name, description, or restaurant name</p>
                 </div>
               </div>
               

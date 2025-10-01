@@ -112,10 +112,18 @@ export function filterJsonLocations(
     // Apply location-level filters
     if (filters.searchTerm) {
       const term = filters.searchTerm.toLowerCase();
-      const matchesSearch = 
+      const matchesLocation = 
         location.restaurantName.toLowerCase().includes(term) ||
         location.neighborhood.toLowerCase().includes(term);
-      if (!matchesSearch) return false;
+      
+      // Also search through wing items for name and description matches
+      const matchesItems = location.items?.some(item => 
+        item.itemName.toLowerCase().includes(term) ||
+        (item.description && item.description.toLowerCase().includes(term)) ||
+        (item.altDescription && item.altDescription.toLowerCase().includes(term))
+      );
+      
+      if (!matchesLocation && !matchesItems) return false;
     }
     
     if (filters.neighborhood && location.neighborhood !== filters.neighborhood) {
