@@ -13,6 +13,8 @@ export type LocationItem = {
   itemKey?: string;
   averageRating?: number;
   ratingCount?: number;
+  userRating?: number;
+  isFavorited?: boolean;
   ratings?: Array<{ _id: Id<'itemRatings'>; [key: string]: unknown }>;
 };
 
@@ -97,5 +99,6 @@ export type ItemEnrichmentData = {
   itemId: string;
   averageRating?: number;
   ratingCount: number;
+  userRating?: number;
   isFavorited: boolean;
 };

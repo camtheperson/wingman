@@ -2,6 +2,8 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 
+// DEPRECATED: This hook is deprecated as part of the refactor to client-side JSON processing
+// Components should now receive enrichment data as props from the page level
 export function useItemData(itemIds: Id<"locationItems">[]) {
   const ratings = useQuery(api.itemRatings.getBatchItemRatings, 
     itemIds.length > 0 ? { itemIds } : "skip"
