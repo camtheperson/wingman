@@ -18,6 +18,12 @@ interface FiltersProps {
   setSelectedType: (value: string) => void;
   favoritesOnly: boolean;
   setFavoritesOnly: (value: boolean) => void;
+  openAtEnabled: boolean;
+  setOpenAtEnabled: (value: boolean) => void;
+  openAtDate: string;
+  setOpenAtDate: (value: string) => void;
+  openAtTime: string;
+  setOpenAtTime: (value: string) => void;
   neighborhoods: string[];
 }
 
@@ -38,6 +44,12 @@ export default function Filters({
   setSelectedType,
   favoritesOnly,
   setFavoritesOnly,
+  openAtEnabled,
+  setOpenAtEnabled,
+  openAtDate,
+  setOpenAtDate,
+  openAtTime,
+  setOpenAtTime,
   neighborhoods,
 }: FiltersProps) {
   const clearFilters = () => {
@@ -49,6 +61,9 @@ export default function Filters({
     setIsOpenNow(false);
     setSelectedType('');
     setFavoritesOnly(false);
+    setOpenAtEnabled(false);
+    setOpenAtDate('');
+    setOpenAtTime('');
   };
 
   return (
@@ -72,6 +87,54 @@ export default function Filters({
         />
         <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Open Now</span>
       </label>
+
+      {/* Nick's unnecessarily complicated Open At filter */}
+      <div className="space-y-3 md:space-y-2">
+        <label className="flex items-center py-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={openAtEnabled}
+            onChange={(e) => setOpenAtEnabled(e.target.checked)}
+            className="mr-3 md:mr-2 w-5 h-5 md:w-4 md:h-4 rounded border-gray-300 text-wingman-purple focus:ring-wingman-purple"
+          />
+          <img 
+            src="/wingman/nick-face.png" 
+            alt="Nick" 
+            className="w-5 h-7 mr-2 rounded object-cover"
+          />
+          <span className="text-base md:text-sm text-gray-700 font-medium md:font-normal">Nick's unnecessarily complicated Open At filter</span>
+        </label>
+        
+        {openAtEnabled && (
+          <div className="ml-8 md:ml-6 space-y-3 md:space-y-2">
+            <div>
+              <label htmlFor="openAtDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Date
+              </label>
+              <input
+                id="openAtDate"
+                type="date"
+                value={openAtDate}
+                onChange={(e) => setOpenAtDate(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-wingman-purple focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="openAtTime" className="block text-sm font-medium text-gray-700 mb-1">
+                Time
+              </label>
+              <input
+                id="openAtTime"
+                type="time"
+                value={openAtTime}
+                onChange={(e) => setOpenAtTime(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-wingman-purple focus:border-transparent"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       <Authenticated>
         <label className="flex items-center py-1 cursor-pointer">

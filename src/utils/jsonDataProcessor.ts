@@ -1,6 +1,6 @@
 import type { JsonItem, LocationWithItems, LocationItem, ItemEnrichmentData, JsonLocationPin } from '../types';
 import type { Id } from '../../convex/_generated/dataModel';
-import { checkIfOpenNow } from './timeUtils';
+import { checkIfOpenNow, checkIfOpenAt } from './timeUtils';
 
 // Group JSON items by location and convert to LocationWithItems format
 export function processJsonToLocations(
@@ -105,6 +105,9 @@ export function filterJsonLocations(
     allowTakeout?: boolean;
     allowDelivery?: boolean;
     isOpenNow?: boolean;
+    openAtEnabled?: boolean;
+    openAtDate?: string;
+    openAtTime?: string;
     type?: 'meat' | 'vegetarian' | 'vegan';
     favoritesOnly?: boolean;
   },
@@ -148,6 +151,12 @@ export function filterJsonLocations(
     if (filters.isOpenNow && location.hours) {
       const isOpen = checkIfOpenNow(location.hours);
       if (!isOpen) return false;
+    }
+    
+    // Apply openAt filter (Nick's unnecessarily complicated filter)
+    if (filters.openAtEnabled && filters.openAtDate && filters.openAtTime && location.hours) {
+      const isOpenAt = checkIfOpenAt(location.hours, filters.openAtDate, filters.openAtTime);
+      if (!isOpenAt) return false;
     }
     
     // Apply item-level filters

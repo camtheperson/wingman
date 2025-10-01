@@ -19,6 +19,9 @@ export default function List() {
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [selectedType, setSelectedType] = useState('');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [openAtEnabled, setOpenAtEnabled] = useState(false);
+  const [openAtDate, setOpenAtDate] = useState('');
+  const [openAtTime, setOpenAtTime] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'neighborhood'>('name');
   const [selectedLocation, setSelectedLocation] = useState<LocationWithItems | null>(null);
@@ -59,10 +62,13 @@ export default function List() {
       allowTakeout: allowTakeout || undefined,
       allowDelivery: allowDelivery || undefined,
       isOpenNow: isOpenNow || undefined,
+      openAtEnabled: openAtEnabled || undefined,
+      openAtDate: openAtDate || undefined,
+      openAtTime: openAtTime || undefined,
       type: selectedType ? selectedType as 'meat' | 'vegetarian' | 'vegan' : undefined,
       favoritesOnly: favoritesOnly || undefined,
     }, favoriteItemIds);
-  }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, selectedType, favoritesOnly]);
+  }, [enrichmentData, favoriteItems, searchTerm, selectedNeighborhood, glutenFree, allowMinors, allowTakeout, allowDelivery, isOpenNow, openAtEnabled, openAtDate, openAtTime, selectedType, favoritesOnly]);
 
   // Clear favorites filter when user logs out
   useEffect(() => {
@@ -153,6 +159,12 @@ export default function List() {
               setSelectedType={setSelectedType}
               favoritesOnly={favoritesOnly}
               setFavoritesOnly={setFavoritesOnly}
+              openAtEnabled={openAtEnabled}
+              setOpenAtEnabled={setOpenAtEnabled}
+              openAtDate={openAtDate}
+              setOpenAtDate={setOpenAtDate}
+              openAtTime={openAtTime}
+              setOpenAtTime={setOpenAtTime}
               neighborhoods={neighborhoods || []}
             />
           </div>
