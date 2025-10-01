@@ -1,33 +1,28 @@
 import ItemRatingControls from './ItemRatingControls';
-import { useSingleItemData } from '../hooks/useItemData';
 import type { Id } from '../../convex/_generated/dataModel';
 
 interface ItemRatingControlsWrapperProps {
   itemId: Id<"locationItems">;
+  userRating?: number | null;
+  isFavorited?: boolean;
+  averageRating?: number;
+  ratingCount?: number;
   size?: 'sm' | 'md' | 'lg';
 }
 
 /**
- * Wrapper component for ItemRatingControls that handles individual item queries
- * Use this when you need rating controls for a single item.
- * For multiple items, prefer using the batch queries with ItemRatingControls directly.
+ * Wrapper component for ItemRatingControls that receives data as props
+ * This component now expects the parent to provide the rating and favorite data
+ * instead of making its own queries.
  */
 export default function ItemRatingControlsWrapper({ 
   itemId, 
+  userRating,
+  isFavorited = false,
+  averageRating,
+  ratingCount = 0,
   size = 'md' 
 }: ItemRatingControlsWrapperProps) {
-  const { 
-    userRating, 
-    isFavorited, 
-    averageRating, 
-    ratingCount, 
-    isLoading 
-  } = useSingleItemData(itemId);
-
-  if (isLoading) {
-    return <div className="text-gray-500 text-sm">Loading...</div>;
-  }
-
   return (
     <ItemRatingControls
       itemId={itemId}

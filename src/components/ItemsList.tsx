@@ -16,6 +16,11 @@ interface ItemsListProps {
 }
 
 export default function ItemsList({ items, compact = false }: ItemsListProps) {
+  // DEPRECATED: This component is deprecated and should not be used in the new JSON-based system
+  // The new system processes enrichment data at the page level and passes it down to components
+  console.warn('ItemsList component is deprecated. Use the new location-level data processing instead.');
+  
+  // For now, use the item data directly if it exists, otherwise use old hook as fallback
   const itemIds = items.map(item => item._id);
   const { ratings, favorites, isLoading } = useItemData(itemIds);
 

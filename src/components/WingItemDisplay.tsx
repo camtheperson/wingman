@@ -55,6 +55,10 @@ export default function WingItemDisplay({
         <div className="mb-4">
           <ItemRatingControlsWrapper 
             itemId={item._id} 
+            userRating={item.userRating}
+            isFavorited={item.isFavorited}
+            averageRating={item.averageRating}
+            ratingCount={item.ratingCount}
             size={showFullDetails ? 'lg' : 'md'} 
           />
         </div>

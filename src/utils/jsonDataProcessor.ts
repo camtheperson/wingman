@@ -64,6 +64,8 @@ export function processJsonToLocations(
         itemKey: item.itemKey,
         averageRating: enrichment?.averageRating,
         ratingCount: enrichment?.ratingCount || 0,
+        userRating: enrichment?.userRating,
+        isFavorited: enrichment?.isFavorited || false,
       };
       
       locationMap[key].items!.push(locationItem);

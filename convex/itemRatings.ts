@@ -156,7 +156,7 @@ export const getBatchItemRatings = query({
     const ratings = await ctx.db.query("itemRatings").collect();
     
     // Group ratings by itemId
-    const ratingsByItem = new Map<string, typeof ratings>();
+    const ratingsByItem = new Map<string, Array<(typeof ratings)[0]>>();
     ratings.forEach(rating => {
       if (args.itemIds.includes(rating.itemId)) {
         if (!ratingsByItem.has(rating.itemId)) {

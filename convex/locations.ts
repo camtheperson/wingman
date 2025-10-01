@@ -230,11 +230,13 @@ export const getItemEnrichmentData = query({
       itemId: string;
       averageRating?: number;
       ratingCount: number;
+      userRating?: number;
       isFavorited: boolean;
     }> = {};
     
     matchingItems.forEach(item => {
       const ratings = relevantRatings.filter(rating => rating.itemId === item._id);
+      const userRating = identity ? ratings.find(r => r.userId === identity.subject) : undefined;
       const averageRating = ratings.length > 0 
         ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
         : undefined;
@@ -243,6 +245,7 @@ export const getItemEnrichmentData = query({
         itemId: item._id,
         averageRating,
         ratingCount: ratings.length,
+        userRating: userRating?.rating,
         isFavorited: userFavorites.has(item._id)
       };
     });
