@@ -43,11 +43,13 @@ export default defineSchema({
     url: v.optional(v.string()),
     image: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    itemKey: v.optional(v.string()), // Unique key to match with JSON data
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_location_id", ["locationId"])
     .index("by_type", ["type"])
+    .index("by_item_key", ["itemKey"])
     .searchIndex("search_items", {
       searchField: "itemName",
       filterFields: ["type", "glutenFree", "locationId"],

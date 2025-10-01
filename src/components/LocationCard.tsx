@@ -1,5 +1,6 @@
 import { MapPin } from 'lucide-react';
 import RatingDisplay from './RatingDisplay';
+import { getTypeTagStyles, type WingType } from '../utils/wingTypeUtils';
 
 interface LocationCardProps {
   location: {
@@ -14,6 +15,7 @@ interface LocationCardProps {
       itemName: string;
       description?: string;
       type: string;
+      types?: WingType[];
       glutenFree: boolean;
       image?: string;
     }>;
@@ -145,21 +147,26 @@ export default function LocationCard({ location, onClick, isSelected }: Location
                       {item.description}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 md:gap-1 mt-2 md:mt-1">
+                  <div className="flex items-center gap-2 md:gap-1 mt-2 md:mt-1 flex-wrap">
                     {item.glutenFree && (
                       <span className="text-sm md:text-xs bg-green-100 text-green-800 px-2 py-1 md:px-2 md:py-0.5 rounded font-medium">
                         GF
                       </span>
                     )}
-                    <span className={`text-sm md:text-xs px-2 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium ${
-                      item.type === 'vegan' 
-                        ? 'bg-green-100 text-green-800' 
-                        : item.type === 'vegetarian' 
-                          ? 'bg-orange-100 text-orange-800' 
-                          : 'bg-red-100 text-red-800'
-                    }`}>
-                      {item.type}
-                    </span>
+                    {/* Show all type tags */}
+                    {item.types && item.types.length > 1 ? (
+                      // Multiple types - show all as separate tags
+                      item.types.map((type) => (
+                        <span key={type} className={`text-sm md:text-xs px-2 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium ${getTypeTagStyles(type)}`}>
+                          {type}
+                        </span>
+                      ))
+                    ) : (
+                      // Single type - show primary type
+                      <span className={`text-sm md:text-xs px-2 py-1 md:px-2 md:py-0.5 rounded capitalize font-medium ${getTypeTagStyles(item.type as WingType)}`}>
+                        {item.type}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
