@@ -119,11 +119,11 @@ export default function List() {
   useEffect(() => {
     if (selectedLocation && locations) {
       const updatedLocation = locations.find(loc => loc._id === selectedLocation._id);
-      if (updatedLocation) {
+      if (updatedLocation && updatedLocation !== selectedLocation) {
         setSelectedLocation(updatedLocation);
       }
     }
-  }, [locations, selectedLocation]);
+  }, [locations]);
 
   // Sort locations based on selected criteria
   const sortedLocations = locations?.filter(location => location != null).sort((a, b) => {
