@@ -275,6 +275,18 @@ export default function Map() {
     }
   }, [searchParams, locations, setSearchParams]); // Now we can exclude selectedLocation from deps
 
+  // Update selectedLocation when locations data changes (e.g., after rating/favorite mutations)
+  // This ensures the modal shows updated rating/favorite data
+  useEffect(() => {
+    const currentSelected = selectedLocationRef.current;
+    if (currentSelected && locations) {
+      const updatedLocation = locations.find(loc => loc._id === currentSelected._id);
+      if (updatedLocation && updatedLocation !== currentSelected) {
+        setSelectedLocation(updatedLocation);
+      }
+    }
+  }, [locations]);
+
   // Check if a location has any favorited items
   const locationHasFavorites = (location: LocationWithItems): boolean => {
     if (!favoriteItems || !location.items) return false;

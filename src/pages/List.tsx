@@ -71,6 +71,16 @@ export default function List() {
     }
   }, [favoriteItems, favoritesOnly, setFavoritesOnly]);
 
+  // Update selectedLocation when locations data changes (e.g., after rating/favorite mutations)
+  useEffect(() => {
+    if (selectedLocation && locations) {
+      const updatedLocation = locations.find(loc => loc._id === selectedLocation._id);
+      if (updatedLocation) {
+        setSelectedLocation(updatedLocation);
+      }
+    }
+  }, [locations, selectedLocation]);
+
   // Sort locations based on selected criteria
   const sortedLocations = locations?.filter(location => location != null).sort((a, b) => {
     switch (sortBy) {
